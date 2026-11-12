@@ -44,12 +44,20 @@
     <button type="button" data-action="snap" title="Snap (Space)">Snap</button>
     <button type="button" data-action="fist" title="Form (F)">Form</button>
     <button type="button" data-action="open" title="Explode (O)">Explode</button>
+    <button type="button" data-action="models" title="All models (M)" aria-expanded="false" aria-controls="model-list">Models</button>
     <button type="button" data-action="next" title="Next model (V or →)">Next</button>
     <button type="button" data-action="labels" title="Part labels (L)" aria-pressed="true">Labels</button>
     <button type="button" data-action="demo" title="Play demo (D)">Demo</button>
     <button type="button" data-action="open-file" title="Turn your own .glb file into particles">Open 3D file</button>
     <button type="button" data-action="help" title="Help (H)" aria-label="Help">?</button>
   </nav>
+
+  <div class="picker" id="model-list" hidden role="dialog" aria-label="Models"></div>
+
+  <div class="hint" id="hint" hidden>
+    <span id="hint-text"></span>
+    <button type="button" aria-label="Hide tips">×</button>
+  </div>
 
   <div class="toast" id="toast" role="alert" hidden></div>
 
@@ -99,8 +107,13 @@
           <div><dt><kbd>D</kbd></dt><dd>Demo</dd></div>
           <div><dt><kbd>L</kbd></dt><dd>Part labels on or off</dd></div>
           <div><dt>Hover, click</dt><dd>See what a part does; click to keep it open</dd></div>
+          <div><dt><kbd>M</kbd></dt><dd>All models</dd></div>
         </dl>
       </div>
+      <section class="help-own">
+        <h3>Use your own model</h3>
+        <p>Drag a <strong>.glb</strong> file onto the page, or choose <strong>Open 3D file</strong>. Each named object in the file becomes a part you can pull apart. Blender, Sketchfab and most 3D tools can export .glb. The file stays on your device.</p>
+      </section>
       <button type="button" id="help-close">Close</button>
     </div>
   </div>

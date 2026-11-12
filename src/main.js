@@ -2,7 +2,7 @@
 // mouse, HUD, camera preview and the built-in demo.
 
 import { ParticleRenderer } from './gl/renderer.js';
-import { entryCount, entryName, isProcedural, buildModel, loadModel as loadEntry, loadFile, addEntry, partUniforms } from './models/registry.js';
+import { ENTRIES, entryCount, entryName, isProcedural, buildModel, loadModel as loadEntry, loadFile, addEntry, partUniforms } from './models/registry.js';
 import { cleanName } from './models/mesh-model.js';
 import { Controller, MODE } from './logic/controller.js';
 import { HandInput } from './logic/input.js';
@@ -28,12 +28,14 @@ const ui = {
   cam: $('cam'), video: $('video'), overlay: $('cam-overlay'), camPose: $('cam-pose'),
   controls: $('controls'), toast: $('toast'), start: $('start'), help: $('help'),
   labels: $('labels'), leaders: $('leaders'), finger: $('finger'), model: $('model-info'),
-  drop: $('drop'), fileInput: $('file-input'),
+  drop: $('drop'), fileInput: $('file-input'), picker: $('model-list'), hint: $('hint'), hintText: $('hint-text'),
 };
 
+let booted = false;
 function hideStart() {
   ui.start.hidden = true;
   document.body.classList.remove('starting');
+  if (booted) syncHud();
 }
 
 function toast(msg, ms = 5000) {
@@ -203,6 +205,8 @@ const STATUS = {
 };
 function syncHud() {
   document.body.dataset.mode = controller.mode;
+  document.body.classList.toggle('compact', controller.mode === MODE.FORMED && controller.explode > 0.05);
+  updateHint();
   ui.status.textContent = loadingName ? `Loading ${loadingName}…` : STATUS[controller.mode];
   ui.meter.hidden = controller.mode !== MODE.FORMED;
   ui.fill.style.width = `${Math.round(controller.explode * 100)}%`;
@@ -326,7 +330,89 @@ const actions = {
   labels: () => { labelsOn = !labelsOn; setPressed('labels', labelsOn); },
   help: () => toggleHelp(),
   'open-file': () => ui.fileInput.click(),
+  models: () => togglePicker(),
 };
+
+// ───────────── model picker ─────────────
+function togglePicker(force) {
+  const show = force ?? ui.picker.hidden;
+  if (show) {
+    buildPicker();
+    // Sit just above the controls, however many rows they wrap onto.
+    ui.picker.style.bottom = `${window.innerHeight - ui.controls.getBoundingClientRect().top + 8}px`;
+  }
+  ui.picker.hidden = !show;
+  ui.controls.querySelector('[data-action="models"]')?.setAttribute('aria-expanded', String(show));
+  if (show) ui.picker.querySelector('[aria-current="true"]')?.focus();
+}
+
+function buildPicker() {
+  const item = (i) => {
+    const e = ENTRIES[i];
+    const b = document.createElement('button');
+    b.type = 'button';
+    b.dataset.index = i;
+    if (i === controller.modelIndex) b.setAttribute('aria-current', 'true');
+    const dot = document.createElement('i');
+    dot.style.color = e.type === 'procedural' ? cssColor(e.def.parts[0].color) : 'var(--gold)';
+    const name = document.createElement('span');
+    name.textContent = entryName(i);
+    b.append(dot, name);
+    b.addEventListener('click', () => { togglePicker(false); controller.goTo(i); });
+    return b;
+  };
+  const group = (title, indices) => {
+    if (!indices.length) return [];
+    const h = document.createElement('p');
+    h.className = 'picker-title';
+    h.textContent = title;
+    return [h, ...indices.map(item)];
+  };
+  const all = ENTRIES.map((_, i) => i);
+  const open = document.createElement('button');
+  open.type = 'button';
+  open.className = 'picker-open';
+  open.textContent = 'Open 3D file…';
+  open.addEventListener('click', () => { togglePicker(false); ui.fileInput.click(); });
+  ui.picker.replaceChildren(
+    ...group('Built from maths', all.filter((i) => ENTRIES[i].type === 'procedural')),
+    ...group('From 3D files', all.filter((i) => ENTRIES[i].type === 'mesh' && !ENTRIES[i].dropped)),
+    ...group('Yours', all.filter((i) => ENTRIES[i].dropped)),
+    open,
+  );
+}
+
+window.addEventListener('pointerdown', (e) => {
+  if (ui.picker.hidden) return;
+  if (!ui.picker.contains(e.target) && !e.target.closest?.('[data-action="models"]')) togglePicker(false);
+});
+
+// ───────────── first-run hints ─────────────
+// One line at a time, until the visitor has built and pulled apart a model once.
+const HINTS_KEY = 'lumina.hints.done';
+const touchOnly = window.matchMedia?.('(hover: none) and (pointer: coarse)').matches ?? false;
+let hintsDone = (() => { try { return localStorage.getItem(HINTS_KEY) === '1'; } catch { return false; } })();
+
+function finishHints() {
+  hintsDone = true;
+  try { localStorage.setItem(HINTS_KEY, '1'); } catch { /* private mode: fine */ }
+  ui.hint.hidden = true;
+}
+
+function updateHint() {
+  if (hintsDone || !ui.start.hidden) { ui.hint.hidden = true; return; }
+  if (controller.mode === MODE.FORMED && controller.explode > 0.3) { finishHints(); return; }
+  const how = tracker ? 'hand' : touchOnly ? 'touch' : 'keys';
+  const text = {
+    [MODE.DORMANT]: { hand: 'Snap your fingers to wake the particles', touch: 'Tap Snap to wake the particles', keys: 'Press Space to wake the particles (or snap your fingers)' },
+    [MODE.CLOUD]: { hand: 'Make a fist to build the model', touch: 'Tap Form to build the model', keys: 'Make a fist, or press F, to build the model' },
+    [MODE.FORMED]: { hand: 'Open your hand to pull it apart', touch: 'Tap Explode to pull it apart', keys: 'Open your hand, or press O, to pull it apart' },
+  }[controller.mode][how];
+  ui.hintText.textContent = text;
+  ui.hint.hidden = false;
+}
+
+ui.hint.querySelector('button').addEventListener('click', finishHints);
 
 // ───────────── your own 3D files ─────────────
 // A dropped or opened .glb is read in a worker, added to the model list and
@@ -414,7 +500,9 @@ window.addEventListener('keydown', (e) => {
     controller.exploding = false;
     controller.setExplode(controller.explode + d);
   };
+  if (!ui.picker.hidden && e.key === 'Escape') { togglePicker(false); return; }
   const map = {
+    m: actions.models,
     ' ': actions.snap, f: actions.fist, o: actions.open, v: () => controller.pose('peace'),
     ArrowRight: actions.next, ArrowLeft: actions.prev,
     ArrowUp: () => nudge(0.1), ArrowDown: () => nudge(-0.1),
@@ -635,6 +723,7 @@ function loop(now) {
 }
 
 // ───────────── boot ─────────────
+booted = true;
 showModel(controller.modelIndex);
 syncHud();
 window.addEventListener('resize', () => renderer.resize());
