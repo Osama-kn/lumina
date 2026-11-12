@@ -102,3 +102,22 @@ test('heartbeat has two beats per cycle and stays near 1', () => {
   }
   assert.equal(peaks, 2);
 });
+
+test('the starter template follows every model rule', async () => {
+  const { default: template } = await import('../../src/models/template.js');
+  const { finishModel, mulberry32 } = await import('../../src/models/registry.js');
+  const build = () => finishModel(template, template.build(N, mulberry32(1)), mulberry32(1));
+  const a = build(), b = build();
+  assert.equal(a.target.length, N * 4);
+  assert.deepEqual(a.target, b.target);
+  assert.ok(a.parts.length >= 2 && a.parts.length <= MAX_PARTS);
+  const used = new Set();
+  let maxR = 0;
+  for (let k = 0; k < N; k++) {
+    used.add(a.target[k * 4 + 3]);
+    maxR = Math.max(maxR, Math.hypot(a.target[k * 4], a.target[k * 4 + 1], a.target[k * 4 + 2]));
+  }
+  assert.equal(used.size, a.parts.length);
+  assert.ok(maxR > 0.5 && maxR < 1.8, `max radius ${maxR}`);
+  for (const p of a.parts) assert.ok(p.info.length > 20);
+});
