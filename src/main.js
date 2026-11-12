@@ -274,14 +274,14 @@ function drawHand(lm) {
   g.clearRect(0, 0, w, h);
   if (!lm) return;
   g.lineWidth = 1.5 * DPR;
-  g.strokeStyle = 'rgba(235,232,255,0.75)';
+  g.strokeStyle = 'rgba(235,230,220,0.6)';
   g.beginPath();
   for (const [a, b] of HAND_LINKS) {
     g.moveTo(lm[a].x * w, lm[a].y * h);
     g.lineTo(lm[b].x * w, lm[b].y * h);
   }
   g.stroke();
-  g.fillStyle = '#ffd166';
+  g.fillStyle = '#ebe6dc';
   for (const i of [4, 8, 12, 16, 20]) {
     g.beginPath();
     g.arc(lm[i].x * w, lm[i].y * h, 3 * DPR, 0, Math.PI * 2);
