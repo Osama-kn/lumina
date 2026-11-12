@@ -172,3 +172,18 @@ test('labels on the left start below the gesture guide', async ({ page }) => {
     expect(overlap).toBe(false);
   }
 });
+
+test('on a phone, a selected part\'s explanation sits below the gesture guide', async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await boot(page);
+  await page.evaluate(() => {
+    const L = window.__lumina;
+    L.useTracker({ detect: () => null, stop() {} });
+    L.controller.snap(); L.controller.pose('fist'); L.tick(30);
+    L.controller.setExplode(1); L.tick(30);
+    L.select.pinned = 2; L.tick(60);
+  });
+  const guide = await page.locator('#guide').boundingBox();
+  const label = await page.locator('.label.active').boundingBox();
+  expect(label.y).toBeGreaterThanOrEqual(guide.y + guide.height);
+});

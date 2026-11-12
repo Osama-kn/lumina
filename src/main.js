@@ -204,6 +204,8 @@ function measureCallouts() {
     c.h = c.el.offsetHeight;
   }
 }
+// The serif may arrive after the first measurement and change label sizes.
+document.fonts?.ready.then(() => measureCallouts());
 
 function setActive(part) {
   if (part === select.active) return;
@@ -648,6 +650,8 @@ function updateSelection(formed) {
 
 function updateCallouts(formed, dt) {
   const compact = camera.width < 720;
+  // On small screens the selected part's label sits near the top, below the gesture guide if it's showing.
+  const compactTop = ui.guide.hidden ? 72 : ui.guide.getBoundingClientRect().bottom + 12;
   const reveal = formed && labelsOn && !compact ? Math.max(0, Math.min(1, (controller.explode - 0.12) / 0.28)) : 0;
   const gutter = Math.max(16, Math.min(36, camera.width * 0.03));
   const camBox = ui.cam.hidden ? null : ui.cam.getBoundingClientRect();
@@ -686,7 +690,7 @@ function updateCallouts(formed, dt) {
     c.line.style.display = c.dot.style.display = c.visible && !compact ? '' : 'none';
     if (!c.visible) continue;
     const wantX = compact ? gutter : c.side === 'left' ? gutter : camera.width - gutter - c.w;
-    const wantY = compact ? 72 : c.wantY;
+    const wantY = compact ? compactTop : c.wantY;
     c.x = c.placed ? ease(c.x, wantX, 14, dt) : wantX;
     c.y = c.placed ? ease(c.y, wantY, 14, dt) : wantY;
     c.placed = true;
