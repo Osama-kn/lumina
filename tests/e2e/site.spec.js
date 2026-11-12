@@ -67,3 +67,13 @@ test('run locally, hand tracking still comes from node_modules', async ({ page }
   const runtime = await page.evaluate(async () => (await import('/src/hands.js')).resolveRuntime());
   expect(runtime.bundle).toMatch(/\/node_modules\/@mediapipe\/tasks-vision\/vision_bundle\.mjs$/);
 });
+
+test('published straight from the repository (no vendor/, no node_modules), hand tracking comes from the CDN', async ({ page }) => {
+  await page.route(/fonts\.(googleapis|gstatic)\.com/, (route) =>
+    route.fulfill({ status: 200, contentType: 'text/css', body: '' }));
+  await page.route(/\/(vendor|node_modules)\//, (route) => route.fulfill({ status: 404, body: '' }));
+  await page.goto('/?autostart=nocamera&n=20000');
+  const runtime = await page.evaluate(async () => (await import('/src/hands.js')).resolveRuntime());
+  expect(runtime.bundle).toBe('https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@1.2.2/vision_bundle.mjs');
+  expect(runtime.wasm).toBe('https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@1.2.2/wasm');
+});

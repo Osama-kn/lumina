@@ -154,3 +154,10 @@ test('every bundled 3D file follows every model rule and builds fast', async () 
     assert.ok(performance.now() - t0 < 1500, `${e.name} too slow`);
   }
 });
+
+test('the CDN fallback for hand tracking is pinned to the installed version', async () => {
+  const { readFile } = await import('node:fs/promises');
+  const pkg = JSON.parse(await readFile(new URL('../../node_modules/@mediapipe/tasks-vision/package.json', import.meta.url), 'utf8'));
+  const hands = await readFile(new URL('../../src/hands.js', import.meta.url), 'utf8');
+  assert.match(hands, new RegExp(`tasks-vision@${pkg.version.replace(/\./g, '\\.')}`));
+});

@@ -1,7 +1,8 @@
 // Webcam + MediaPipe Hand Landmarker. Everything runs on-device: frames never
 // leave the browser. The tracking runtime comes from vendor/ on the built site
-// (scripts/build-site.mjs) or from node_modules when run with `npm start`; the
-// model file comes from models/ if present, otherwise from Google's CDN.
+// (scripts/build-site.mjs), from node_modules when run with `npm start`, or
+// from the jsDelivr CDN if neither is there; the model file comes from models/
+// if present, otherwise from Google's CDN.
 // Paths are relative to this file, so the app also works from a sub-path.
 
 const here = (path) => new URL(path, import.meta.url).href;
@@ -19,9 +20,16 @@ async function exists(url) {
   }
 }
 
+// Last resort when the site was published without the runtime (for example
+// GitHub Pages serving the repository as-is). Keep the version in step with
+// package.json; a unit test checks it.
+const CDN = 'https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@1.2.2';
+
 /** Where to load the tracking runtime and model from. */
 export async function resolveRuntime() {
-  const root = (await exists(`${VENDOR}/vision_bundle.mjs`)) ? VENDOR : NODE_MODULES;
+  const root = (await exists(`${VENDOR}/vision_bundle.mjs`)) ? VENDOR
+    : (await exists(`${NODE_MODULES}/vision_bundle.mjs`)) ? NODE_MODULES
+    : CDN;
   return {
     bundle: `${root}/vision_bundle.mjs`,
     wasm: `${root}/wasm`,
