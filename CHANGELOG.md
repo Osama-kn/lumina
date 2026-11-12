@@ -2,7 +2,9 @@
 
 ## Unreleased
 
-- With the camera on, a gesture guide on the left shows what your hand can do right now and lights up the pose you're making.
+- A new, quieter look: serif names, placard-style part labels, plain text controls and a numbered model list. No more frosted panels or glows; the particles are the only thing that shines.
+- The model title shows its place in the catalogue ("No. 03 of 10"), and "?" is now "Help".
+- With the camera on, a gesture guide on the left shows what your hand can do right now and underlines the pose you're making.
 
 ## 1.0.0 — 2026-11-12
 

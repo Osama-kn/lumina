@@ -88,3 +88,37 @@ test('the hint hides with a word, not a symbol', async ({ page }) => {
   await boot(page);
   await expect(page.locator('#hint button')).toHaveText('Hide');
 });
+
+test('gestures that do nothing yet are quieter but still readable', async ({ page }) => {
+  await boot(page);
+  await page.evaluate(() => { window.__lumina.useTracker({ detect: () => null, stop() {} }); window.__lumina.tick(1); });
+  const rows = await page.evaluate(() => [...document.querySelectorAll('#guide li')].map((li) => {
+    const lum = (c) => {
+      const [r, g, b] = c.match(/\d+/g).map((v) => +v / 255).map((v) => (v <= 0.03928 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4));
+      return 0.2126 * r + 0.7152 * g + 0.0722 * b;
+    };
+    const opacity = +getComputedStyle(li).opacity;
+    const contrast = (el) => (lum(getComputedStyle(el).color) * opacity + 0.05) / 0.05; // on black
+    return { g: li.dataset.gesture, name: contrast(li.querySelector('b')), what: contrast(li.querySelector('span')) };
+  }));
+  for (const r of rows) {
+    expect(r.name, `${r.g} name`).toBeGreaterThanOrEqual(4.5);
+    expect(r.what, `${r.g} description`).toBeGreaterThanOrEqual(4.5);
+  }
+});
+
+test('every gesture name fits on one line', async ({ page }) => {
+  await boot(page);
+  await page.evaluate(() => { window.__lumina.useTracker({ detect: () => null, stop() {} }); window.__lumina.tick(1); });
+  const heights = await page.evaluate(() => [...document.querySelectorAll('#guide li b')].map((b) => b.getBoundingClientRect().height));
+  expect(Math.max(...heights) - Math.min(...heights)).toBeLessThan(2);
+});
+
+test('the Hide button is big enough to tap', async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.addInitScript(() => { try { localStorage.removeItem('lumina.hints.done'); } catch {} });
+  await boot(page);
+  const box = await page.locator('#hint button').boundingBox();
+  expect(box.height).toBeGreaterThanOrEqual(24);
+  expect(box.width).toBeGreaterThanOrEqual(32);
+});
