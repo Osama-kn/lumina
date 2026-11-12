@@ -151,3 +151,19 @@ test('peace does nothing while dormant', () => {
   c.pose('peace');
   assert.equal(c.modelIndex, 0);
 });
+
+test('the model list can grow, and goTo jumps straight to a model', () => {
+  const c = new Controller({ modelCount: 3 });
+  const seen = [];
+  c.on((e) => { if (e.type === 'model') seen.push(e.index); });
+  c.snap(); c.pose('fist'); c.setExplode(0.7);
+  c.setModelCount(4);
+  c.goTo(3);
+  assert.equal(c.modelIndex, 3);
+  assert.equal(c.explode, 0, 'a new model starts assembled');
+  c.step(1);
+  assert.equal(c.modelIndex, 0, 'wraps over the new count');
+  c.goTo(-1);
+  assert.equal(c.modelIndex, 3);
+  assert.deepEqual(seen, [3, 0, 3]);
+});

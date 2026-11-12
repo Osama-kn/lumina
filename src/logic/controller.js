@@ -70,11 +70,21 @@ export class Controller {
   }
 
   step(delta) {
+    this.goTo(this.modelIndex + delta);
+  }
+
+  /** Jump to a model; indices wrap around the list. */
+  goTo(index) {
     const n = this.modelCount;
-    this.modelIndex = (((this.modelIndex + delta) % n) + n) % n;
+    this.modelIndex = ((index % n) + n) % n;
     this.explode = 0;
     this.exploding = false;
     this.emit('model', { index: this.modelIndex });
+  }
+
+  /** The list of models grew (someone dropped in a file). */
+  setModelCount(n) {
+    this.modelCount = Math.max(1, n);
   }
 
   snapshot() {

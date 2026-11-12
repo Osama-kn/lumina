@@ -2,7 +2,7 @@
 // mouse, HUD, camera preview and the built-in demo.
 
 import { ParticleRenderer } from './gl/renderer.js';
-import { MODELS, buildModel, partUniforms } from './models/registry.js';
+import { entryCount, entryName, isProcedural, buildModel, loadModel as loadEntry, partUniforms } from './models/registry.js';
 import { Controller, MODE } from './logic/controller.js';
 import { HandInput } from './logic/input.js';
 import { MODE_ID, heartbeat } from './logic/physics.js';
@@ -51,7 +51,7 @@ try {
   throw err;
 }
 
-const controller = new Controller({ modelCount: MODELS.length, modelIndex: START_MODEL });
+const controller = new Controller({ modelCount: entryCount(), modelIndex: START_MODEL });
 const input = new HandInput(controller);
 
 const modelCache = new Map();
@@ -65,9 +65,51 @@ let labelsOn = true;
 let cursor = null;
 let callouts = [];
 
-function loadModel(index) {
-  if (!modelCache.has(index)) modelCache.set(index, buildModel(index, COUNT));
-  model = modelCache.get(index);
+// Models written in code build instantly; 3D files load in the background
+// while the current model stays on screen.
+let loading = Promise.resolve();
+let loadingName = '';
+let loadToken = 0;
+function showModel(index) {
+  const token = ++loadToken;
+  if (modelCache.has(index) || isProcedural(index)) {
+    if (!modelCache.has(index)) modelCache.set(index, buildModel(index, COUNT));
+    applyModel(modelCache.get(index));
+    loadingName = '';
+    loading = Promise.resolve();
+    return loading;
+  }
+  loadingName = entryName(index);
+  loading = loadEntry(index, COUNT)
+    .then((m) => {
+      modelCache.set(index, m);
+      if (token === loadToken) applyModel(m);
+    })
+    .catch((err) => {
+      if (token === loadToken) toast(modelError(err, entryName(index)));
+    })
+    .finally(() => {
+      if (token !== loadToken) return;
+      loadingName = '';
+      syncHud();
+    });
+  return loading;
+}
+
+/** A sentence a person can act on, for each way a 3D file can fail. */
+function modelError(err, name) {
+  switch (err?.code) {
+    case 'not-gltf': return `${name} isn't a 3D model Lumina can read. Try a .glb file.`;
+    case 'compressed': return `${name} is compressed (Draco or Meshopt). Export it again without compression.`;
+    case 'external-buffer': return `${name} uses separate files. Export it as a single .glb instead.`;
+    case 'no-triangles': return `${name} has no surfaces to turn into particles.`;
+    case 'too-large': return `${name} is too big: the limit is 5 million triangles and 50 MB.`;
+    default: return `Couldn't load ${name}: ${err?.message || err}`;
+  }
+}
+
+function applyModel(m) {
+  model = m;
   uniforms = partUniforms(model);
   renderer.setModel(model, uniforms);
   ui.name.textContent = model.name;
@@ -159,13 +201,13 @@ const STATUS = {
 };
 function syncHud() {
   document.body.dataset.mode = controller.mode;
-  ui.status.textContent = STATUS[controller.mode];
+  ui.status.textContent = loadingName ? `Loading ${loadingName}…` : STATUS[controller.mode];
   ui.meter.hidden = controller.mode !== MODE.FORMED;
   ui.fill.style.width = `${Math.round(controller.explode * 100)}%`;
 }
 
 controller.on((e) => {
-  if (e.type === 'model') loadModel(e.index);
+  if (e.type === 'model') showModel(e.index);
   syncHud();
 });
 
@@ -527,7 +569,7 @@ function loop(now) {
 }
 
 // ───────────── boot ─────────────
-loadModel(controller.modelIndex);
+showModel(controller.modelIndex);
 syncHud();
 window.addEventListener('resize', () => renderer.resize());
 
@@ -557,4 +599,8 @@ window.__lumina = {
   feed(hand, now) { input.process(hand, now); },
   playDemo,
   hideStart,
+  /** Resolves once the current model has finished loading. */
+  ready: () => loading,
+  entryName,
+  showModel,
 };

@@ -64,7 +64,13 @@ test('keyboard drives the full story: snap, form, explode, next, sleep', async (
   await expect(page.locator('#model-name')).toHaveText('Human heart');
   await page.keyboard.press('ArrowLeft');
   await page.keyboard.press('ArrowLeft');
-  await expect(page.locator('#model-name')).toHaveText('Jet engine');
+  // Wrapped around to the last model in the list.
+  const last = await page.evaluate(async () => {
+    const L = window.__lumina;
+    await L.ready();
+    return L.entryName(L.controller.modelCount - 1);
+  });
+  await expect(page.locator('#model-name')).toHaveText(last);
 
   await page.keyboard.press('Space');
   expect(await mode()).toBe('dormant');
@@ -147,12 +153,13 @@ test('the GPU physics shader matches its CPU twin', async ({ page }) => {
 
 test('every model loads and renders', async ({ page }) => {
   const errors = await boot(page);
-  const { names, count } = await page.evaluate(() => {
+  const { names, count } = await page.evaluate(async () => {
     const L = window.__lumina;
     L.controller.snap();
     L.controller.pose('fist');
     const seen = [];
     for (let i = 0; i < L.controller.modelCount; i++) {
+      await L.ready();
       L.tick(20);
       seen.push(L.model.name);
       L.controller.step(1);
