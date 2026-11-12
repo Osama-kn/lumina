@@ -28,7 +28,7 @@ const ui = {
   cam: $('cam'), video: $('video'), overlay: $('cam-overlay'), camPose: $('cam-pose'),
   controls: $('controls'), toast: $('toast'), start: $('start'), help: $('help'),
   labels: $('labels'), leaders: $('leaders'), finger: $('finger'), model: $('model-info'),
-  drop: $('drop'), fileInput: $('file-input'), credit: $('model-credit'), picker: $('model-list'), hint: $('hint'), hintText: $('hint-text'),
+  drop: $('drop'), fileInput: $('file-input'), credit: $('model-credit'), guide: $('guide'), picker: $('model-list'), hint: $('hint'), hintText: $('hint-text'),
 };
 
 let booted = false;
@@ -350,6 +350,33 @@ const actions = {
   models: () => togglePicker(),
 };
 
+// ───────────── gesture guide ─────────────
+// While the camera is on, a short list on the left of what your hand can do.
+// Gestures that do something right now are bright; the pose you hold lights up.
+const USEFUL_NOW = {
+  [MODE.DORMANT]: ['snap'],
+  [MODE.CLOUD]: ['snap', 'fist', 'move', 'peace'],
+  [MODE.FORMED]: ['open', 'fist', 'tilt', 'point', 'peace', 'snap'],
+};
+const guideRows = [...ui.guide.querySelectorAll('[data-gesture]')];
+let guideState = '';
+
+function updateGuide() {
+  const on = !!tracker;
+  const held = on ? input.pose : 'none';
+  const state = `${on}|${controller.mode}|${held}`;
+  if (state === guideState) return;
+  guideState = state;
+  ui.guide.hidden = !on;
+  if (!on) return;
+  const useful = USEFUL_NOW[controller.mode];
+  for (const row of guideRows) {
+    const g = row.dataset.gesture;
+    row.classList.toggle('now', useful.includes(g));
+    row.classList.toggle('held', g === held);
+  }
+}
+
 // ───────────── model picker ─────────────
 function togglePicker(force) {
   const show = force ?? ui.picker.hidden;
@@ -636,10 +663,11 @@ function updateCallouts(formed, dt) {
 
   if (!compact) {
     const top = 96;
+    const leftTop = ui.guide.hidden ? top : ui.guide.getBoundingClientRect().bottom + 12;
     const leftBottom = ui.model.getBoundingClientRect().top - 12;
     const rightBottom = (camBox ? camBox.top : camera.height - gutter - 56) - 12;
     for (const [side, list] of Object.entries(columns)) {
-      const ys = stackColumn(list.map((c) => ({ want: c.anchor.y - c.h / 2, h: c.h })), top, side === 'left' ? leftBottom : rightBottom);
+      const ys = stackColumn(list.map((c) => ({ want: c.anchor.y - c.h / 2, h: c.h })), side === 'left' ? leftTop : top, side === 'left' ? leftBottom : rightBottom);
       list.forEach((c, i) => { c.wantY = ys[i]; });
     }
   }
@@ -719,6 +747,7 @@ function frame(now, fixedDt) {
     width: window.innerWidth,
     height: window.innerHeight,
   };
+  updateGuide();
   // Until the first model has loaded there are no parts to select or label.
   updateSelection(formed && !!model);
   updateCallouts(formed && !!model, dt);
@@ -781,6 +810,8 @@ window.__lumina = {
   feed(hand, now) { input.process(hand, now); },
   playDemo,
   hideStart,
+  /** Swap in a hand tracker (tests use a stand-in camera); null turns it off. */
+  useTracker(t) { tracker = t; },
   /** Resolves once the current model has finished loading. */
   ready: () => loading,
   entryName,

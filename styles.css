@@ -408,3 +408,47 @@ body.starting .hint { display: none; }
 .model .credit[hidden] { display: none; }
 .model .credit a { color: var(--muted); }
 .model .credit a:hover { color: var(--text); }
+
+/* ── gesture guide (camera on) ───────────────────────── */
+.guide {
+  position: fixed;
+  top: calc(var(--gutter) + 64px);
+  left: var(--gutter);
+  width: 196px;
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: var(--glass);
+  backdrop-filter: blur(8px);
+  font-size: 13px;
+  pointer-events: none;
+}
+.guide[hidden] { display: none; }
+.guide-title {
+  margin: 0 0 6px;
+  color: var(--muted);
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+.guide ul { margin: 0; padding: 0; list-style: none; display: grid; gap: 2px; }
+.guide li {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 3px 6px;
+  border-radius: 8px;
+  color: var(--muted);
+  opacity: 0.45;
+  transition: opacity 0.2s, background-color 0.2s;
+}
+.guide li b { color: var(--text); font-weight: 500; }
+.guide li.now { opacity: 1; }
+.guide li.held { opacity: 1; background: rgba(255, 209, 102, 0.16); }
+.guide li.held b { color: var(--gold); }
+.guide-icon { width: 18px; text-align: center; font-size: 15px; }
+body.starting .guide { display: none; }
+@media (max-width: 640px) {
+  .guide { width: auto; padding: 8px; }
+  .guide-title, .guide li span:not(.guide-icon) { display: none; }
+}

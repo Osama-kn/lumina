@@ -1,5 +1,9 @@
 # Changelog
 
+## Unreleased
+
+- With the camera on, a gesture guide on the left shows what your hand can do right now and lights up the pose you're making.
+
 ## 1.0.0 — 2026-11-12
 
 First public release.

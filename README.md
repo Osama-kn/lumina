@@ -44,6 +44,8 @@ Open **http://localhost:5173** in Chrome or Edge and choose **Start with camera*
 | ☝️ Point | Point at a part to see what it does |
 | 👋 Move | While the particles swirl, they follow your hand |
 
+With the camera on, a small guide on the left lists these gestures. The ones that do something right now are bright, and the one your hand is making lights up.
+
 | Key or mouse | Action |
 | --- | --- |
 | `Space` | Snap |

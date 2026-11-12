@@ -118,3 +118,57 @@ test('in the picker, Space chooses the focused model and arrows move between mod
   await expect(page.locator('#model-name')).toHaveText(want);
   expect(await page.evaluate(() => window.__lumina.controller.mode)).toBe('dormant');
 });
+
+test('with the camera on, a guide on the left shows what your hand can do', async ({ page }) => {
+  const errors = await boot(page);
+  const guide = page.locator('#guide');
+  await expect(guide).toBeHidden();
+
+  // A stand-in camera that reports whatever hand the test sets.
+  await page.evaluate(() => {
+    window.__hand = null;
+    window.__lumina.useTracker({ detect: () => window.__hand, stop() {} });
+    window.__lumina.tick(1);
+  });
+  await expect(guide).toBeVisible();
+  const box = await guide.boundingBox();
+  expect(box.x).toBeLessThan(60);
+  for (const g of ['snap', 'fist', 'open', 'tilt', 'peace', 'point']) {
+    await expect(guide.locator(`[data-gesture="${g}"]`)).toBeVisible();
+  }
+
+  // Asleep: only the snap does anything.
+  await expect(guide.locator('[data-gesture="snap"]')).toHaveClass(/now/);
+  await expect(guide.locator('[data-gesture="open"]')).not.toHaveClass(/now/);
+
+  // Built: pulling apart is what to try, and the pose you hold lights up.
+  await page.evaluate(async () => {
+    const { HANDS } = await import('/src/logic/synthetic-hand.js');
+    const L = window.__lumina;
+    L.controller.snap(); L.controller.pose('fist');
+    window.__hand = HANDS.fist();
+    L.tick(12);
+  });
+  await expect(guide.locator('[data-gesture="open"]')).toHaveClass(/now/);
+  await expect(guide.locator('[data-gesture="fist"]')).toHaveClass(/held/);
+
+  await page.evaluate(() => { window.__lumina.useTracker(null); window.__lumina.tick(1); });
+  await expect(guide).toBeHidden();
+  expect(errors).toEqual([]);
+});
+
+test('labels on the left start below the gesture guide', async ({ page }) => {
+  await boot(page);
+  await page.evaluate(() => {
+    const L = window.__lumina;
+    L.useTracker({ detect: () => null, stop() {} });
+    L.controller.snap(); L.controller.pose('fist'); L.tick(30);
+    L.controller.setExplode(1); L.tick(60);
+  });
+  const guide = await page.locator('#guide').boundingBox();
+  for (const label of await page.locator('.label:visible').all()) {
+    const b = await label.boundingBox();
+    const overlap = b.x < guide.x + guide.width && guide.x < b.x + b.width && b.y < guide.y + guide.height && guide.y < b.y + b.height;
+    expect(overlap).toBe(false);
+  }
+});
