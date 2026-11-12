@@ -1,9 +1,17 @@
 {
   "name": "lumina",
   "version": "1.0.0",
-  "description": "Hand-gesture-controlled 3D shapes made of glowing GPU particles. MediaPipe hand tracking and a hand-written WebGL2 transform-feedback particle engine.",
+  "description": "Pull 3D models apart with your hands: hand-gesture controlled glowing particles in the browser. Drop in your own .glb. Hand-written WebGL2, no build step.",
   "type": "module",
   "private": true,
+  "homepage": "https://osama-kn.github.io/lumina/",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Osama-kn/lumina.git"
+  },
+  "bugs": {
+    "url": "https://github.com/Osama-kn/lumina/issues"
+  },
   "scripts": {
     "start": "node server.mjs",
     "build": "node scripts/build-site.mjs",
@@ -19,7 +27,11 @@
     "mediapipe",
     "hand-tracking",
     "gestures",
-    "transform-feedback"
+    "transform-feedback",
+    "gltf",
+    "glb",
+    "3d-model-viewer",
+    "exploded-view"
   ],
   "author": "Oussama (Osama-kn)",
   "license": "MIT",
