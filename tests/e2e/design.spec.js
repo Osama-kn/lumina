@@ -107,18 +107,29 @@ test('gestures that do nothing yet are quieter but still readable', async ({ pag
   }
 });
 
-test('every gesture name fits on one line', async ({ page }) => {
+test('every name in the guide fits on one line, with or without the camera', async ({ page }) => {
   await boot(page);
+  const heights = () => page.evaluate(() => [...document.querySelectorAll('#guide li b')]
+    .map((b) => b.getBoundingClientRect().height).filter((h) => h > 0));
+  await page.evaluate(() => window.__lumina.tick(1));
+  const keys = await heights();
+  expect(keys.length).toBe(7);
+  expect(Math.max(...keys) - Math.min(...keys)).toBeLessThan(2);
   await page.evaluate(() => { window.__lumina.useTracker({ detect: () => null, stop() {} }); window.__lumina.tick(1); });
-  const heights = await page.evaluate(() => [...document.querySelectorAll('#guide li b')].map((b) => b.getBoundingClientRect().height));
-  expect(Math.max(...heights) - Math.min(...heights)).toBeLessThan(2);
+  const hand = await heights();
+  expect(hand.length).toBe(7);
+  expect(Math.max(...hand) - Math.min(...hand)).toBeLessThan(2);
 });
 
-test('the Hide button is big enough to tap', async ({ page }) => {
+test('the Hide buttons are big enough to tap', async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
-  await page.addInitScript(() => { try { localStorage.removeItem('lumina.hints.done'); } catch {} });
+  await page.addInitScript(() => { try { localStorage.removeItem('lumina.hints.done'); localStorage.removeItem('lumina.guide.hidden'); } catch {} });
   await boot(page);
-  const box = await page.locator('#hint button').boundingBox();
-  expect(box.height).toBeGreaterThanOrEqual(24);
-  expect(box.width).toBeGreaterThanOrEqual(32);
+  await page.evaluate(() => window.__lumina.tick(1));
+  for (const sel of ['#guide-hide', '#hint button']) {
+    if (sel === '#hint button') { await page.locator('#guide-hide').click(); await page.evaluate(() => window.__lumina.tick(1)); }
+    const box = await page.locator(sel).boundingBox();
+    expect(box.height, sel).toBeGreaterThanOrEqual(24);
+    expect(box.width, sel).toBeGreaterThanOrEqual(32);
+  }
 });

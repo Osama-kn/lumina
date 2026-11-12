@@ -360,32 +360,70 @@ const actions = {
   models: () => togglePicker(),
 };
 
-// ───────────── gesture guide ─────────────
-// While the camera is on, a short list on the left of what your hand can do.
-// Gestures that do something right now are bright; the pose you hold lights up.
-const USEFUL_NOW = {
-  [MODE.DORMANT]: ['snap'],
-  [MODE.CLOUD]: ['snap', 'fist', 'move', 'peace'],
-  [MODE.FORMED]: ['open', 'fist', 'tilt', 'point', 'peace', 'snap'],
+// ───────────── control guide ─────────────
+// A short list on the left of how to control the model: hand gestures while the
+// camera is on, otherwise the keyboard and mouse (or touch). What does something
+// right now is bright; the pose your hand holds is underlined.
+const GUIDES = {
+  hand: {
+    title: 'With your hand',
+    attr: 'gesture',
+    now: {
+      [MODE.DORMANT]: ['snap'],
+      [MODE.CLOUD]: ['snap', 'fist', 'move', 'peace'],
+      [MODE.FORMED]: ['open', 'fist', 'tilt', 'point', 'peace', 'snap'],
+    },
+  },
+  keys: {
+    title: 'Keyboard and mouse',
+    attr: 'key',
+    now: {
+      [MODE.DORMANT]: ['space', 'drag'],
+      [MODE.CLOUD]: ['space', 'f', 'leftright', 'drag'],
+      [MODE.FORMED]: ['o', 'f', 'updown', 'leftright', 'drag', 'click', 'space'],
+    },
+  },
+  touch: {
+    title: 'Touch',
+    attr: 'touch',
+    now: {
+      [MODE.DORMANT]: ['snap', 'drag'],
+      [MODE.CLOUD]: ['form', 'snap', 'drag'],
+      [MODE.FORMED]: ['explode', 'form', 'drag', 'tap', 'snap'],
+    },
+  },
 };
-const guideRows = [...ui.guide.querySelectorAll('[data-gesture]')];
+const GUIDE_KEY = 'lumina.guide.hidden';
+let guideHidden = (() => { try { return localStorage.getItem(GUIDE_KEY) === '1'; } catch { return false; } })();
 let guideState = '';
 
+function toggleGuide(force) {
+  guideHidden = !(force ?? guideHidden);
+  try { localStorage.setItem(GUIDE_KEY, guideHidden ? '1' : '0'); } catch { /* private mode: fine */ }
+  guideState = '';
+  updateGuide();
+}
+
 function updateGuide() {
-  const on = !!tracker;
-  const held = on ? input.pose : 'none';
-  const state = `${on}|${controller.mode}|${held}`;
+  const kind = tracker ? 'hand' : touchOnly ? 'touch' : 'keys';
+  const held = kind === 'hand' ? input.pose : 'none';
+  const state = `${guideHidden}|${kind}|${controller.mode}|${held}`;
   if (state === guideState) return;
   guideState = state;
-  ui.guide.hidden = !on;
-  if (!on) return;
-  const useful = USEFUL_NOW[controller.mode];
-  for (const row of guideRows) {
-    const g = row.dataset.gesture;
-    row.classList.toggle('now', useful.includes(g));
-    row.classList.toggle('held', g === held);
+  ui.guide.hidden = guideHidden;
+  if (guideHidden) return;
+  const guide = GUIDES[kind];
+  ui.guide.querySelector('#guide-title').textContent = guide.title;
+  for (const list of ui.guide.querySelectorAll('ul')) list.hidden = list.dataset.for !== kind;
+  const useful = guide.now[controller.mode];
+  for (const row of ui.guide.querySelectorAll(`[data-for="${kind}"] li`)) {
+    const id = row.dataset[guide.attr];
+    row.classList.toggle('now', useful.includes(id));
+    row.classList.toggle('held', id === held);
   }
 }
+
+ui.guide.querySelector('#guide-hide').addEventListener('click', () => toggleGuide(false));
 
 // ───────────── model picker ─────────────
 function togglePicker(force) {
@@ -568,6 +606,7 @@ window.addEventListener('keydown', (e) => {
   }
   const map = {
     m: actions.models,
+    g: () => toggleGuide(),
     ' ': actions.snap, f: actions.fist, o: actions.open, v: () => controller.pose('peace'),
     ArrowRight: actions.next, ArrowLeft: actions.prev,
     ArrowUp: () => nudge(0.1), ArrowDown: () => nudge(-0.1),

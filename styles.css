@@ -313,14 +313,22 @@ body.starting .hint { display: none; }
   text-shadow: var(--lift);
 }
 .guide[hidden] { display: none; }
-.guide-title {
+.guide-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
   margin: 0 0 6px;
+}
+.guide-head button { padding: 7px 8px; margin: -7px -8px; font-size: 11px; pointer-events: auto; }
+.guide-title {
   color: var(--muted);
   font-size: 12px;
   font-variant-caps: all-small-caps;
   letter-spacing: 0.06em;
 }
 .guide ul { margin: 0; padding: 0; list-style: none; }
+.guide ul[hidden] { display: none; }
 .guide li {
   display: flex;
   align-items: baseline;
@@ -423,12 +431,18 @@ kbd {
   .help-cols { grid-template-columns: 1fr; gap: 24px; }
   .help dl div { grid-template-columns: 6rem 1fr; }
   .guide { width: auto; }
-  .guide-title, .guide li span { display: none; }
-  .guide li b { width: auto; }
+  .guide:has([data-for='hand']:not([hidden])) .guide-head { display: none; }
+  .guide [data-for='hand'] li span { display: none; }
+  .guide [data-for='hand'] li b { width: auto; }
 }
 
 @media (prefers-reduced-motion: reduce) {
   .model h1, .parts, button, .guide li { transition: none; }
+}
+
+/* On small screens the guide already says what to do next, so the first-run hint steps aside. */
+@media (max-width: 719px) {
+  body:has(#guide:not([hidden])) .hint { display: none; }
 }
 
 /* On small screens the selected label sits over the model: give it a solid placard to stay readable. */

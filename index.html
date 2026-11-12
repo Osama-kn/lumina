@@ -31,9 +31,9 @@
     <ul id="parts" class="parts" aria-label="Parts"></ul>
   </section>
 
-  <aside class="guide" id="guide" hidden aria-label="Hand gestures">
-    <p class="guide-title">With your hand</p>
-    <ul>
+  <aside class="guide" id="guide" hidden aria-label="How to control the model">
+    <p class="guide-head"><span class="guide-title" id="guide-title">Keyboard and mouse</span><button type="button" id="guide-hide" title="Hide this guide (G)">Hide</button></p>
+    <ul data-for="hand" hidden>
       <li data-gesture="snap"><b>Snap</b><span>wake or sleep</span></li>
       <li data-gesture="fist"><b>Fist</b><span>build or put back</span></li>
       <li data-gesture="open"><b>Open hand</b><span>pull apart</span></li>
@@ -41,6 +41,22 @@
       <li data-gesture="point"><b>Point</b><span>explain a part</span></li>
       <li data-gesture="peace"><b>Peace</b><span>next model</span></li>
       <li data-gesture="move"><b>Move</b><span>lead the swirl</span></li>
+    </ul>
+    <ul data-for="keys">
+      <li data-key="space"><b>Space</b><span>wake or sleep</span></li>
+      <li data-key="f"><b>F</b><span>build or put back</span></li>
+      <li data-key="o"><b>O</b><span>pull apart</span></li>
+      <li data-key="updown"><b>↑ ↓</b><span>how far apart</span></li>
+      <li data-key="leftright"><b>← →</b><span>change model</span></li>
+      <li data-key="drag"><b>Drag</b><span>spin and tip</span></li>
+      <li data-key="click"><b>Click</b><span>explain a part</span></li>
+    </ul>
+    <ul data-for="touch" hidden>
+      <li data-touch="snap"><b>Snap</b><span>wake or sleep</span></li>
+      <li data-touch="form"><b>Form</b><span>build or put back</span></li>
+      <li data-touch="explode"><b>Explode</b><span>pull apart</span></li>
+      <li data-touch="drag"><b>Drag</b><span>spin</span></li>
+      <li data-touch="tap"><b>Tap a part</b><span>explain it</span></li>
     </ul>
   </aside>
 
@@ -123,6 +139,7 @@
           <div><dt><kbd>L</kbd></dt><dd>Part labels on or off</dd></div>
           <div><dt>Hover, click</dt><dd>See what a part does; click to keep it open</dd></div>
           <div><dt><kbd>M</kbd></dt><dd>All models</dd></div>
+          <div><dt><kbd>G</kbd></dt><dd>Show or hide the guide on the left</dd></div>
         </dl>
       </div>
       <section class="help-own">

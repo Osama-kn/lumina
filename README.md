@@ -44,7 +44,7 @@ Open **http://localhost:5173** in Chrome or Edge and choose **Start with camera*
 | ☝️ Point | Point at a part to see what it does |
 | 👋 Move | While the particles swirl, they follow your hand |
 
-With the camera on, a small guide on the left lists these gestures. The ones that do something right now are bright, and the one your hand is making is underlined.
+A small guide on the left lists the controls: these gestures while the camera is on, otherwise the keys and mouse (or touch). The ones that do something right now are bright, and the gesture your hand is making is underlined. Press `G` or choose *Hide* to put it away.
 
 | Key or mouse | Action |
 | --- | --- |
@@ -53,6 +53,7 @@ With the camera on, a small guide on the left lists these gestures. The ones tha
 | `←` `→` | Previous / next model |
 | `↑` `↓` | Pull apart / put together |
 | `M` | List of all models |
+| `G` | Show or hide the guide on the left |
 | Drag, wheel | Rotate, zoom |
 | Hover, click | See what a part does; click keeps it open, `Esc` closes it |
 | `L` | Part labels on or off |

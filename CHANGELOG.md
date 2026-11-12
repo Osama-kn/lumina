@@ -5,6 +5,7 @@
 - A new, quieter look: serif names, placard-style part labels, plain text controls and a numbered model list. No more frosted panels or glows; the particles are the only thing that shines.
 - The model title shows its place in the catalogue ("No. 03 of 10"), and "?" is now "Help".
 - With the camera on, a gesture guide on the left shows what your hand can do right now and underlines the pose you're making.
+- Without a camera, the same guide lists the keyboard and mouse controls, or touch controls on phones. `G` shows or hides it.
 
 ## 1.0.0 — 2026-11-12
 

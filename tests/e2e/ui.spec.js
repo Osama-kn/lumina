@@ -122,7 +122,7 @@ test('in the picker, Space chooses the focused model and arrows move between mod
 test('with the camera on, a guide on the left shows what your hand can do', async ({ page }) => {
   const errors = await boot(page);
   const guide = page.locator('#guide');
-  await expect(guide).toBeHidden();
+  await expect(guide.locator('[data-gesture="snap"]')).toBeHidden();
 
   // A stand-in camera that reports whatever hand the test sets.
   await page.evaluate(() => {
@@ -153,8 +153,59 @@ test('with the camera on, a guide on the left shows what your hand can do', asyn
   await expect(guide.locator('[data-gesture="fist"]')).toHaveClass(/held/);
 
   await page.evaluate(() => { window.__lumina.useTracker(null); window.__lumina.tick(1); });
-  await expect(guide).toBeHidden();
+  await expect(guide.locator('[data-gesture="snap"]')).toBeHidden();
   expect(errors).toEqual([]);
+});
+
+test('without a camera, the guide lists the keys and mouse instead', async ({ page }) => {
+  const errors = await boot(page);
+  const guide = page.locator('#guide');
+  await page.evaluate(() => window.__lumina.tick(1));
+  await expect(guide).toBeVisible();
+  await expect(guide.locator('.guide-title')).toContainText(/keyboard/i);
+  for (const k of ['space', 'f', 'o', 'updown', 'leftright', 'drag', 'click']) {
+    await expect(guide.locator(`[data-key="${k}"]`)).toBeVisible();
+  }
+  await expect(guide.locator('[data-gesture="snap"]')).toBeHidden();
+
+  // Asleep: only Space does anything.
+  await expect(guide.locator('[data-key="space"]')).toHaveClass(/now/);
+  await expect(guide.locator('[data-key="o"]')).not.toHaveClass(/now/);
+
+  await page.keyboard.press('Space');
+  await page.keyboard.press('f');
+  await page.evaluate(() => window.__lumina.tick(1));
+  await expect(guide.locator('[data-key="o"]')).toHaveClass(/now/);
+  await expect(guide.locator('[data-key="click"]')).toHaveClass(/now/);
+  expect(errors).toEqual([]);
+});
+
+test('the guide can be put away and brought back, and stays put away', async ({ page }) => {
+  await boot(page);
+  await page.evaluate(() => window.__lumina.tick(1));
+  await page.locator('#guide-hide').click();
+  await page.evaluate(() => window.__lumina.tick(1));
+  await expect(page.locator('#guide')).toBeHidden();
+
+  await boot(page);
+  await page.evaluate(() => window.__lumina.tick(1));
+  await expect(page.locator('#guide')).toBeHidden();
+  await page.keyboard.press('g');
+  await page.evaluate(() => window.__lumina.tick(1));
+  await expect(page.locator('#guide')).toBeVisible();
+});
+
+test('on a touch screen the guide speaks of tapping and dragging', async ({ browser }) => {
+  const context = await browser.newContext({ viewport: { width: 390, height: 844 }, hasTouch: true, isMobile: true });
+  const page = await context.newPage();
+  await boot(page);
+  await page.evaluate(() => window.__lumina.tick(1));
+  await expect(page.locator('#guide .guide-title')).toContainText(/touch/i);
+  // The guide already says what to do next, so the first-run hint steps aside on small screens.
+  await expect(page.locator('#hint')).toBeHidden();
+  await expect(page.locator('#guide [data-touch="drag"]')).toBeVisible();
+  await expect(page.locator('#guide [data-key="space"]')).toBeHidden();
+  await context.close();
 });
 
 test('labels on the left start below the gesture guide', async ({ page }) => {
