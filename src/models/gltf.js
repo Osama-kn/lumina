@@ -33,7 +33,17 @@ const READERS = {
  * @param {{maxTriangles?: number}} [opts]
  * @returns {{meshes: Array<{name:string, path:string[], triangles:Float32Array, color:number[]|null}>, warnings:string[]}}
  */
-export function parseGltf(data, { maxTriangles = 5_000_000 } = {}) {
+export function parseGltf(data, opts) {
+  try {
+    return parse(data, opts);
+  } catch (err) {
+    if (err instanceof GltfError) throw err;
+    // Truncated downloads and broken references end up here as RangeError/TypeError.
+    throw new GltfError('not-gltf', 'This file looks damaged or incomplete.');
+  }
+}
+
+function parse(data, { maxTriangles = 5_000_000 } = {}) {
   const { json, bin } = readContainer(data);
   if (!json || typeof json !== 'object' || !json.asset || !Array.isArray(json.meshes)) {
     throw new GltfError('not-gltf', "That file isn't a 3D model Lumina can read.");

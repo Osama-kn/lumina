@@ -168,3 +168,11 @@ test('builds 200k particles from 100k triangles in under 1500 ms', () => {
   assert.equal(m.target.length, 800_000);
   assert.ok(ms < 1500, `${ms.toFixed(0)} ms`);
 });
+
+test('details that match nothing in the file are reported, not silently ignored', () => {
+  const details = { parts: { Wheelz: { info: 'A typo that matches nothing at all.' }, Wheels: { merge: ['Left wheel', 'NoSuchNode'] } } };
+  const m = meshToModel(threeParts(), details, N);
+  assert.ok(m.warnings.some((w) => w.includes('Wheelz')), m.warnings.join(' | '));
+  assert.ok(m.warnings.some((w) => w.includes('NoSuchNode')), m.warnings.join(' | '));
+  assert.ok(!m.warnings.some((w) => w.includes('Left wheel')));
+});

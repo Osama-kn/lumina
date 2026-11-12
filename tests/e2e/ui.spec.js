@@ -93,3 +93,28 @@ test('on a phone the open picker fits the screen', async ({ page }) => {
   const overflow = await page.evaluate(() => document.documentElement.scrollWidth > window.innerWidth);
   expect(overflow).toBe(false);
 });
+
+test('a 3D model shows who made it', async ({ page }) => {
+  await boot(page);
+  await expect(page.locator('#model-credit')).toBeHidden();
+  await page.evaluate(async () => {
+    const L = window.__lumina;
+    L.controller.goTo([...Array(L.controller.modelCount).keys()].find((i) => L.entryName(i) === 'Chess set'));
+    await L.ready();
+  });
+  await expect(page.locator('#model-credit')).toBeVisible();
+  await expect(page.locator('#model-credit')).toContainText('CC BY 4.0');
+  await expect(page.locator('#model-credit a')).toHaveAttribute('href', /CREDITS\.md/);
+});
+
+test('in the picker, Space chooses the focused model and arrows move between models', async ({ page }) => {
+  await boot(page);
+  await page.keyboard.press('m');
+  await page.locator('#model-list [data-index="2"]').focus();
+  await page.keyboard.press('ArrowDown');
+  await expect(page.locator('#model-list [data-index="3"]')).toBeFocused();
+  await page.keyboard.press('Space');
+  const want = await page.evaluate(() => window.__lumina.entryName(3));
+  await expect(page.locator('#model-name')).toHaveText(want);
+  expect(await page.evaluate(() => window.__lumina.controller.mode)).toBe('dormant');
+});

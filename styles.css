@@ -403,3 +403,8 @@ body.starting .hint { display: none; }
 .help-own { margin-bottom: 28px; max-width: 46rem; }
 .help-own h3 { margin: 0 0 8px; font: 500 20px/1.2 var(--display); }
 .help-own p { margin: 0; color: #c9c5ea; }
+
+.model .credit { margin-top: 4px; font-size: 12px; pointer-events: auto; }
+.model .credit[hidden] { display: none; }
+.model .credit a { color: var(--muted); }
+.model .credit a:hover { color: var(--text); }

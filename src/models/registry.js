@@ -127,8 +127,10 @@ function buildMeshInWorker(job) {
       else p.resolve(data.model);
     };
     worker.onerror = (ev) => {
-      for (const p of pending.values()) p.reject(Object.assign(new Error(ev.message || 'The model worker failed'), { code: 'worker' }));
+      for (const p of pending.values()) p.reject(Object.assign(new Error(ev.message || 'The model worker failed to start'), { code: 'worker' }));
       pending.clear();
+      worker.terminate();
+      worker = null; // start a fresh one next time
     };
   }
   const id = ++jobs;

@@ -122,3 +122,17 @@ test('refuses models over the triangle limit', () => {
   const glb = makeGlb({ meshes: [{ name: 'q', primitives: [QUAD] }], nodes: [{ name: 'Q', mesh: 0 }] });
   assert.equal(code(() => parseGltf(glb, { maxTriangles: 1 })), 'too-large');
 });
+
+test('a damaged or incomplete file gets a plain message, not a crash', () => {
+  const glb = makeGlb({ meshes: [{ name: 'q', primitives: [QUAD] }], nodes: [{ name: 'Q', mesh: 0 }] });
+  const truncated = glb.slice(0, glb.byteLength - 40);
+  let err;
+  try { parseGltf(truncated); } catch (e) { err = e; }
+  assert.ok(err instanceof GltfError, `got ${err}`);
+  assert.equal(err.code, 'not-gltf');
+  assert.match(err.message, /damaged|incomplete/);
+
+  const json = JSON.parse(makeGlb({ meshes: [{ name: 'q', primitives: [QUAD] }], nodes: [{ name: 'Q', mesh: 0 }], format: 'gltf' }));
+  json.meshes[0].primitives[0].attributes.POSITION = 99;
+  assert.equal(code(() => parseGltf(JSON.stringify(json))), 'not-gltf');
+});

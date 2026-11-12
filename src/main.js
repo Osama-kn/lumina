@@ -28,7 +28,7 @@ const ui = {
   cam: $('cam'), video: $('video'), overlay: $('cam-overlay'), camPose: $('cam-pose'),
   controls: $('controls'), toast: $('toast'), start: $('start'), help: $('help'),
   labels: $('labels'), leaders: $('leaders'), finger: $('finger'), model: $('model-info'),
-  drop: $('drop'), fileInput: $('file-input'), picker: $('model-list'), hint: $('hint'), hintText: $('hint-text'),
+  drop: $('drop'), fileInput: $('file-input'), credit: $('model-credit'), picker: $('model-list'), hint: $('hint'), hintText: $('hint-text'),
 };
 
 let booted = false;
@@ -69,6 +69,9 @@ let labelsOn = true;
 let cursor = null;
 let callouts = [];
 
+const CREDITS_URL = 'https://github.com/Osama-kn/lumina/blob/main/examples/CREDITS.md';
+let shownIndex = -1;
+
 // Models written in code build instantly; 3D files load in the background
 // while the current model stays on screen.
 let loading = Promise.resolve();
@@ -79,6 +82,7 @@ function showModel(index) {
   if (modelCache.has(index) || isProcedural(index)) {
     if (!modelCache.has(index)) modelCache.set(index, buildModel(index, COUNT));
     applyModel(modelCache.get(index));
+    shownIndex = index;
     loadingName = '';
     loading = Promise.resolve();
     return loading;
@@ -87,10 +91,13 @@ function showModel(index) {
   loading = loadEntry(index, COUNT)
     .then((m) => {
       modelCache.set(index, m);
-      if (token === loadToken) applyModel(m);
+      if (token === loadToken) { applyModel(m); shownIndex = index; }
     })
     .catch((err) => {
-      if (token === loadToken) toast(modelError(err, entryName(index)));
+      if (token !== loadToken) return;
+      toast(modelError(err, entryName(index)));
+      // Keep the list in step with what's on screen.
+      if (shownIndex >= 0 && shownIndex !== index) controller.goTo(shownIndex);
     })
     .finally(() => {
       if (token !== loadToken) return;
@@ -118,6 +125,16 @@ function applyModel(m) {
   renderer.setModel(model, uniforms);
   ui.name.textContent = model.name;
   ui.blurb.textContent = model.blurb;
+  ui.credit.hidden = !model.credit;
+  if (model.credit) {
+    const link = document.createElement('a');
+    link.href = CREDITS_URL;
+    link.target = '_blank';
+    link.rel = 'noopener';
+    link.textContent = 'Credits';
+    ui.credit.replaceChildren(`${model.credit} · `, link);
+  }
+  if (model.warnings?.length) console.warn(`${model.name}:\n${model.warnings.join('\n')}`);
   select.label = select.legend = select.pinned = select.active = -1;
   view.highlight = -1;
   ui.parts.replaceChildren(...model.parts.map((p, i) => {
@@ -501,6 +518,16 @@ window.addEventListener('keydown', (e) => {
     controller.setExplode(controller.explode + d);
   };
   if (!ui.picker.hidden && e.key === 'Escape') { togglePicker(false); return; }
+  if (!ui.picker.hidden && ui.picker.contains(document.activeElement)) {
+    // Inside the list, keys move between models; Space and Enter choose one.
+    if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+      e.preventDefault();
+      const items = [...ui.picker.querySelectorAll('button')];
+      const at = items.indexOf(document.activeElement);
+      items[(at + (e.key === 'ArrowDown' ? 1 : -1) + items.length) % items.length].focus();
+    }
+    return;
+  }
   const map = {
     m: actions.models,
     ' ': actions.snap, f: actions.fist, o: actions.open, v: () => controller.pose('peace'),

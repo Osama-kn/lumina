@@ -46,7 +46,8 @@ export function meshToModel(meshes, details, n, seed = 1337, fallbackName = 'You
   const rng = mulberry32(seed);
   const title = d.name ?? fallbackName;
 
-  let groups = groupMeshes(meshes, d.parts ?? {});
+  const warnings = [];
+  let groups = groupMeshes(meshes, d.parts ?? {}, warnings);
   let regions = false;
   if (groups.length === 1) {
     groups = splitIntoRegions(groups[0]);
@@ -96,12 +97,14 @@ export function meshToModel(meshes, details, n, seed = 1337, fallbackName = 'You
   });
 
   const blurb = d.blurb ?? `${parts.length} parts from a 3D file. Open your hand to pull it apart.`;
-  return finishModel({ name: title, blurb, parts, credit: d.credit ?? null }, pts, rng);
+  const model = finishModel({ name: title, blurb, parts, credit: d.credit ?? null }, pts, rng);
+  model.warnings = warnings;
+  return model;
 }
 
 // ── grouping ─────────────────────────────────────────────
 
-function groupMeshes(meshes, partDetails) {
+function groupMeshes(meshes, partDetails, warnings) {
   // Hand-made groups from the details file: any node on a mesh's path can match.
   const mergeTo = new Map();
   const overrideFor = new Map();
@@ -120,8 +123,11 @@ function groupMeshes(meshes, partDetails) {
   })();
 
   const byName = new Map();
+  const usedMerges = new Set();
   for (const m of meshes) {
-    const manual = [...m.path].reverse().map((p) => mergeTo.get(key(p))).find(Boolean);
+    const hit = [...m.path].reverse().find((p) => mergeTo.has(key(p)));
+    if (hit !== undefined) usedMerges.add(key(hit));
+    const manual = hit !== undefined ? mergeTo.get(key(hit)) : undefined;
     const name = manual ?? cleanName(m.path[Math.min(depth, m.path.length - 1)]);
     let g = byName.get(key(name));
     if (!g) {
@@ -132,6 +138,13 @@ function groupMeshes(meshes, partDetails) {
     g.chunks.push(m.triangles);
     const a = areaOf(m.triangles);
     if (m.color && a > g.colorArea) { g.color = m.color; g.colorArea = a; }
+  }
+  // A typo in the details file would otherwise do nothing, silently.
+  for (const [name, o] of Object.entries(partDetails)) {
+    if (!byName.has(key(name))) warnings.push(`Details part "${name}" matches nothing in the file`);
+    for (const m of o.merge ?? []) {
+      if (!usedMerges.has(key(m))) warnings.push(`Merge name "${m}" (in "${name}") matches nothing in the file`);
+    }
   }
   return [...byName.values()].map((g) => finalizeGroup(g, concat(g.chunks)));
 }

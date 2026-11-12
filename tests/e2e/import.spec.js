@@ -111,3 +111,30 @@ test('files over 50 MB are refused before reading them', async ({ page }) => {
   });
   await expect(page.locator('#toast')).toContainText('too big');
 });
+
+test('if the model worker fails, loading stops with a message and the next try works', async ({ page }) => {
+  const errors = await boot(page);
+  await page.route('**/src/models/worker.js', (route) => route.fulfill({ status: 500, body: '' }));
+  await drop(page, [{ name: 'robot.glb', buffer: robot() }]);
+  await expect(page.locator('#toast')).toContainText('robot.glb');
+  await expect(page.locator('#status')).not.toContainText('Loading');
+  await page.unroute('**/src/models/worker.js');
+  await drop(page, [{ name: 'robot.glb', buffer: robot() }]);
+  await expect(page.locator('#model-name')).toHaveText('Robot');
+  void errors;
+});
+
+test('if a bundled model fails to load, the app stays on the model it was showing', async ({ page }) => {
+  await boot(page);
+  await page.route('**/examples/chess-set.glb', (route) => route.fulfill({ status: 404, body: '' }));
+  const result = await page.evaluate(async () => {
+    const L = window.__lumina;
+    const chess = [...Array(L.controller.modelCount).keys()].find((i) => L.entryName(i) === 'Chess set');
+    L.controller.goTo(chess);
+    await L.ready();
+    return { index: L.controller.modelIndex, name: L.model.name };
+  });
+  expect(result).toEqual({ index: 0, name: 'Saturn' });
+  await expect(page.locator('#toast')).toContainText('Chess set');
+  await expect(page.locator('#model-name')).toHaveText('Saturn');
+});
