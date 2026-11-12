@@ -422,8 +422,19 @@ kbd {
 .noscript { position: fixed; inset: 0; display: grid; place-items: center; }
 
 /* ── phones ──────────────────────────────────────────── */
+@media (max-width: 719px) {
+  /* One swipeable row of controls instead of a wrapped block. */
+  .controls { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; gap: 0 20px; }
+  .controls::-webkit-scrollbar { display: none; }
+  .controls button { flex: none; }
+  /* Help stays reachable at the right end while the rest of the row scrolls under it. */
+  .controls [data-action='help'] { position: sticky; right: 0; padding-left: 14px; background: var(--ink); box-shadow: none; }
+  /* The labels name the parts, so the legend and caption step aside. */
+  .model #model-blurb, .parts { display: none; }
+}
+
 @media (max-width: 640px) {
-  .model { bottom: calc(var(--gutter) + 80px); }
+  .model { bottom: calc(var(--gutter) + 44px); }
   .model h1 { font-size: 30px; }
   body.compact .model h1 { font-size: 22px; }
   .controls { gap: 0 18px; }

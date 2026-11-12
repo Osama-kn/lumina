@@ -55,6 +55,7 @@ A small guide on the left lists the controls: these gestures while the camera is
 | `M` | List of all models |
 | `G` | Show or hide the guide on the left |
 | Drag, wheel | Rotate, zoom |
+| Pinch | Zoom, on touch screens |
 | Hover, click | See what a part does; click keeps it open, `Esc` closes it |
 | `L` | Part labels on or off |
 | `R` / `T` | Auto-rotate / motion trails |
@@ -62,7 +63,7 @@ A small guide on the left lists the controls: these gestures while the camera is
 | `D` | Demo: a pretend hand plays through every gesture |
 | `H` | Help |
 
-On a phone or tablet, use the buttons at the bottom of the screen.
+On a phone or tablet, drag to turn the model, pinch to zoom, tap a part to read about it, and swipe the row of buttons at the bottom for the rest. **Guide** opens the list of controls.
 
 ## Use your own 3D model
 

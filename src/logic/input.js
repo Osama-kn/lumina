@@ -12,6 +12,18 @@ export function explodeFromOpenness(o) {
   return Math.max(0, Math.min(1, (o - 0.2) / 0.7));
 }
 
+/**
+ * How far to tip the model for a palm at height y (0 top … 1 bottom of the frame).
+ * The middle of the frame is a dead zone, so a hand that drifts a little (as it
+ * always does, especially close to a phone camera) doesn't make the model wobble.
+ */
+export function pitchFromPalm(y) {
+  const DEAD = 0.12, GAIN = 1.4, LIMIT = 0.55;
+  const off = y - 0.5;
+  const beyond = Math.max(0, Math.abs(off) - DEAD) * Math.sign(off);
+  return Math.max(-LIMIT, Math.min(LIMIT, beyond * GAIN)) || 0; // no -0
+}
+
 export class HandInput {
   constructor(controller, { sensitivity = 'standard', holdMs = 110 } = {}) {
     this.controller = controller;

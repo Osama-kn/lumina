@@ -123,7 +123,7 @@ test('every name in the guide fits on one line, with or without the camera', asy
 
 test('the Hide buttons are big enough to tap', async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
-  await page.addInitScript(() => { try { localStorage.removeItem('lumina.hints.done'); localStorage.removeItem('lumina.guide.hidden'); } catch {} });
+  await page.addInitScript(() => { try { localStorage.removeItem('lumina.hints.done'); localStorage.setItem('lumina.guide.hidden', '0'); } catch {} });
   await boot(page);
   await page.evaluate(() => window.__lumina.tick(1));
   for (const sel of ['#guide-hide', '#hint button']) {

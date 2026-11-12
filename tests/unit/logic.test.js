@@ -167,3 +167,16 @@ test('the model list can grow, and goTo jumps straight to a model', () => {
   assert.equal(c.modelIndex, 3);
   assert.deepEqual(seen, [3, 0, 3]);
 });
+
+test('small changes in hand height do not tip the model; a clear raise or drop does', async () => {
+  const { pitchFromPalm } = await import('../../src/logic/input.js');
+  assert.equal(pitchFromPalm(0.5), 0);
+  assert.equal(pitchFromPalm(0.58), 0, 'inside the dead zone');
+  assert.equal(pitchFromPalm(0.42), 0, 'inside the dead zone');
+  assert.ok(pitchFromPalm(0.85) > 0.2, 'hand low in the frame tips it one way');
+  assert.ok(pitchFromPalm(0.15) < -0.2, 'hand high tips it the other way');
+  assert.ok(Math.abs(pitchFromPalm(0.7) + pitchFromPalm(0.3)) < 1e-9, 'symmetric');
+  assert.ok(Math.abs(pitchFromPalm(2)) <= 0.6 && Math.abs(pitchFromPalm(-1)) <= 0.6, 'never past a gentle limit');
+  // Continuous at the edge of the dead zone: no jump.
+  assert.ok(Math.abs(pitchFromPalm(0.6001) - pitchFromPalm(0.6)) < 0.01);
+});

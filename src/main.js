@@ -5,7 +5,7 @@ import { ParticleRenderer } from './gl/renderer.js';
 import { ENTRIES, entryCount, entryName, isProcedural, buildModel, loadModel as loadEntry, loadFile, addEntry, partUniforms } from './models/registry.js';
 import { cleanName } from './models/mesh-model.js';
 import { Controller, MODE } from './logic/controller.js';
-import { HandInput } from './logic/input.js';
+import { HandInput, pitchFromPalm } from './logic/input.js';
 import { MODE_ID, heartbeat } from './logic/physics.js';
 import { syntheticHand } from './logic/synthetic-hand.js';
 import { yawPitch, mulMat3T } from './lib/mat.js';
@@ -15,11 +15,13 @@ import { LM } from './logic/gestures.js';
 // ───────────── options ─────────────
 const params = new URLSearchParams(location.search);
 const num = (k, d) => (params.has(k) && Number.isFinite(+params.get(k)) ? +params.get(k) : d);
-const COUNT = Math.round(Math.min(Math.max(num('n', 200_000), 1_000), 1_000_000));
+// Phones and tablets share their GPU with hand tracking, so they start lighter.
+const touchOnly = window.matchMedia?.('(hover: none) and (pointer: coarse)').matches ?? false;
+const COUNT = Math.round(Math.min(Math.max(num('n', touchOnly ? 80_000 : 200_000), 1_000), 1_000_000));
 const START_MODEL = Math.round(num('model', 0));
 const AUTOSTART = params.get('autostart'); // 'camera' | 'nocamera'
 const TRAILS = params.get('trails') !== '0';
-const DPR = params.has('dpr') ? num('dpr', 1) : Math.min(window.devicePixelRatio || 1, 2);
+const DPR = params.has('dpr') ? num('dpr', 1) : Math.min(window.devicePixelRatio || 1, touchOnly ? 1.5 : 2);
 
 const $ = (id) => document.getElementById(id);
 const ui = {
@@ -223,6 +225,17 @@ const view = {
   alpha: 0.18, cloudMix: 1, highlight: -1,
   zoom: 4.2,
 };
+// How far back the camera starts: 4.2 on wide screens, farther on tall narrow ones
+// (phones in portrait) so a model about 1.5 across still fits the width.
+const clampZoom = (z) => Math.max(2.4, Math.min(12, z));
+function fitZoom() {
+  const aspect = window.innerWidth / window.innerHeight;
+  return clampZoom(Math.max(4.2, 1.55 / (Math.tan(renderer.fovY / 2) * aspect)));
+}
+let userZoomed = false;
+view.zoom = fitZoom();
+renderer.distance = view.zoom;
+
 const alphaScale = Math.min(1, Math.max(0.08, 0.36 * Math.sqrt(120_000 / COUNT)));
 
 const STATUS = {
@@ -358,6 +371,7 @@ const actions = {
   help: () => toggleHelp(),
   'open-file': () => ui.fileInput.click(),
   models: () => togglePicker(),
+  guide: () => toggleGuide(),
 };
 
 // ───────────── control guide ─────────────
@@ -394,7 +408,14 @@ const GUIDES = {
   },
 };
 const GUIDE_KEY = 'lumina.guide.hidden';
-let guideHidden = (() => { try { return localStorage.getItem(GUIDE_KEY) === '1'; } catch { return false; } })();
+// Folded away by default on small screens, where it would cover the model; the visitor's own choice wins.
+let guideHidden = (() => {
+  try {
+    const saved = localStorage.getItem(GUIDE_KEY);
+    if (saved !== null) return saved === '1';
+  } catch { /* private mode: fall through */ }
+  return window.innerWidth < 720;
+})();
 let guideState = '';
 
 function toggleGuide(force) {
@@ -411,6 +432,7 @@ function updateGuide() {
   if (state === guideState) return;
   guideState = state;
   ui.guide.hidden = guideHidden;
+  setPressed('guide', !guideHidden);
   if (guideHidden) return;
   const guide = GUIDES[kind];
   ui.guide.querySelector('#guide-title').textContent = guide.title;
@@ -483,7 +505,6 @@ window.addEventListener('pointerdown', (e) => {
 // ───────────── first-run hints ─────────────
 // One line at a time, until the visitor has built and pulled apart a model once.
 const HINTS_KEY = 'lumina.hints.done';
-const touchOnly = window.matchMedia?.('(hover: none) and (pointer: coarse)').matches ?? false;
 let hintsDone = (() => { try { return localStorage.getItem(HINTS_KEY) === '1'; } catch { return false; } })();
 
 function finishHints() {
@@ -624,19 +645,48 @@ window.addEventListener('keydown', (e) => {
 });
 
 let drag = null;
+// Two fingers on the scene pinch to zoom; one finger (or the mouse) turns the model.
+const touches = new Map();
+let pinch = null;
+const spread = () => { const [a, b] = [...touches.values()]; return Math.hypot(a.x - b.x, a.y - b.y) || 1; };
 ui.scene.addEventListener('pointerdown', (e) => {
+  touches.set(e.pointerId, { x: e.clientX, y: e.clientY });
+  try { ui.scene.setPointerCapture(e.pointerId); } catch { /* pointer already gone */ }
+  if (touches.size === 2) {
+    pinch = { spread: spread(), zoom: view.zoom };
+    drag = null;
+    view.dragging = true;
+    return;
+  }
+  if (touches.size > 2) return;
   drag = { x: e.clientX, y: e.clientY, yaw: view.yaw, pitch: view.pitch };
   view.dragging = true;
-  ui.scene.setPointerCapture(e.pointerId);
 });
 ui.scene.addEventListener('pointermove', (e) => {
   cursor = e.pointerType === 'mouse' ? { x: e.clientX, y: e.clientY } : null;
+  if (touches.has(e.pointerId)) touches.set(e.pointerId, { x: e.clientX, y: e.clientY });
+  if (pinch && touches.size >= 2) {
+    view.zoom = clampZoom((pinch.zoom * pinch.spread) / spread());
+    userZoomed = true;
+    return;
+  }
   if (!drag) return;
   view.yaw = drag.yaw + (e.clientX - drag.x) * 0.008;
   view.pitch = Math.max(-1.2, Math.min(1.2, drag.pitch + (e.clientY - drag.y) * 0.008));
 });
 const endDrag = () => { drag = null; view.dragging = false; };
+const liftFinger = (e) => {
+  touches.delete(e.pointerId);
+  if (pinch && touches.size < 2) {
+    // The pinch is over; don't let the remaining finger jump the model or count as a tap.
+    pinch = null;
+    if (!touches.size) endDrag();
+    return true;
+  }
+  return false;
+};
 ui.scene.addEventListener('pointerup', (e) => {
+  if (liftFinger(e) || pinch) return;
   // A press that didn't move is a click: pin the part under it, or clear the pin.
   if (drag && Math.hypot(e.clientX - drag.x, e.clientY - drag.y) < 6 && controller.mode === MODE.FORMED) {
     const part = partAt({ x: e.clientX, y: e.clientY }, e.pointerType === 'mouse' ? 28 : 44);
@@ -644,11 +694,12 @@ ui.scene.addEventListener('pointerup', (e) => {
   }
   endDrag();
 });
-ui.scene.addEventListener('pointercancel', endDrag);
+ui.scene.addEventListener('pointercancel', (e) => { liftFinger(e); endDrag(); });
 ui.scene.addEventListener('pointerleave', () => { cursor = null; });
 ui.scene.addEventListener('wheel', (e) => {
   e.preventDefault();
-  view.zoom = Math.max(2.4, Math.min(9, view.zoom * Math.exp(e.deltaY * 0.0012)));
+  view.zoom = clampZoom(view.zoom * Math.exp(e.deltaY * 0.0012));
+  userZoomed = true;
 }, { passive: false });
 
 // ───────────── frame loop ─────────────
@@ -771,7 +822,7 @@ function frame(now, fixedDt) {
     const dead = 0.22;
     const speed = Math.abs(tw) > dead ? (tw - Math.sign(tw) * dead) * 3.2 : 0;
     view.yawVel = ease(view.yawVel, speed, 6, dt);
-    view.pitch = ease(view.pitch, (input.palm.y - 0.5) * 1.1, 4, dt);
+    view.pitch = ease(view.pitch, pitchFromPalm(input.palm.y), 4, dt);
   } else {
     view.yawVel = ease(view.yawVel, view.autoRotate && !view.dragging ? 0.22 : 0, 2, dt);
   }
@@ -834,7 +885,10 @@ function loop(now) {
 booted = true;
 showModel(controller.modelIndex);
 syncHud();
-window.addEventListener('resize', () => renderer.resize());
+window.addEventListener('resize', () => {
+  renderer.resize();
+  if (!userZoomed) view.zoom = fitZoom();
+});
 
 if (AUTOSTART === 'camera') { hideStart(); startCamera(); }
 else if (AUTOSTART === 'nocamera') hideStart();

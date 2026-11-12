@@ -198,6 +198,7 @@ test('the guide can be put away and brought back, and stays put away', async ({ 
 test('on a touch screen the guide speaks of tapping and dragging', async ({ browser }) => {
   const context = await browser.newContext({ viewport: { width: 390, height: 844 }, hasTouch: true, isMobile: true });
   const page = await context.newPage();
+  await page.addInitScript(() => { try { localStorage.setItem('lumina.guide.hidden', '0'); } catch {} });
   await boot(page);
   await page.evaluate(() => window.__lumina.tick(1));
   await expect(page.locator('#guide .guide-title')).toContainText(/touch/i);
@@ -226,6 +227,7 @@ test('labels on the left start below the gesture guide', async ({ page }) => {
 
 test('on a phone, a selected part\'s explanation sits below the gesture guide', async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
+  await page.addInitScript(() => { try { localStorage.setItem('lumina.guide.hidden', '0'); } catch {} });
   await boot(page);
   await page.evaluate(() => {
     const L = window.__lumina;
