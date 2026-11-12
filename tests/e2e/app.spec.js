@@ -257,3 +257,23 @@ test('phone layout keeps everything on screen', async ({ page }) => {
   expect(overflow).toBe(false);
   await expect(page.locator('#controls [data-action="help"]')).toBeInViewport();
 });
+
+test('starting on a 3D-file model waits for it without errors', async ({ page }) => {
+  const errors = [];
+  page.on('pageerror', (e) => errors.push(e.message));
+  page.on('console', (m) => { if (m.type() === 'error') errors.push(m.text()); });
+  await page.route(/fonts\.(googleapis|gstatic)\.com/, (route) =>
+    route.fulfill({ status: 200, contentType: 'text/css', body: '' }));
+  const index = await (async () => {
+    await page.goto('/?autostart=nocamera&n=20000');
+    await page.waitForFunction(() => window.__lumina);
+    return page.evaluate(() => window.__lumina.entryName && [...Array(window.__lumina.controller.modelCount).keys()]
+      .find((i) => window.__lumina.entryName(i) === 'Chess set'));
+  })();
+  await page.goto(`/?autostart=nocamera&n=20000&model=${index}`);
+  await page.waitForFunction(() => window.__lumina);
+  await page.evaluate(() => window.__lumina.ready());
+  await page.waitForTimeout(300);
+  await expect(page.locator('#model-name')).toHaveText('Chess set');
+  expect(errors).toEqual([]);
+});

@@ -1,0 +1,172 @@
+{
+  "name": "Chess set",
+  "blurb": "A full chess set. Pull it apart to sort the pieces by how they move.",
+  "rotation": [
+    20,
+    0,
+    0
+  ],
+  "credit": "\"A Beautiful Game\" by the MaterialX Project (ASWF), glTF conversion by Ed Mackey, CC BY 4.0",
+  "parts": {
+    "Board": {
+      "merge": [
+        "Chessboard"
+      ],
+      "info": "64 squares in an 8 by 8 grid. Each player starts with a light square in the right-hand corner.",
+      "color": "#8a7dff",
+      "dir": [
+        0,
+        -0.8,
+        0
+      ],
+      "spread": 0.1
+    },
+    "White king and queen": {
+      "merge": [
+        "King_W",
+        "Queen_W"
+      ],
+      "info": "The king moves one square any way; lose him and you lose. The queen moves any distance in any straight line.",
+      "color": "#fff1c4",
+      "spread": 0.35,
+      "dir": [
+        0,
+        1.2,
+        -0.5
+      ]
+    },
+    "Black king and queen": {
+      "merge": [
+        "King_B",
+        "Queen_B"
+      ],
+      "info": "Black's king and queen. The queen is the strongest piece, worth about nine pawns.",
+      "color": "#ff7aa8",
+      "spread": 0.35,
+      "dir": [
+        0,
+        1.2,
+        0.5
+      ]
+    },
+    "White pawns": {
+      "merge": [
+        "Pawn_Body_W1",
+        "Pawn_Body_W2",
+        "Pawn_Body_W3",
+        "Pawn_Body_W4",
+        "Pawn_Body_W5",
+        "Pawn_Body_W6",
+        "Pawn_Body_W7",
+        "Pawn_Body_W8"
+      ],
+      "info": "Eight pawns move one square forward and capture diagonally. One that reaches the far side becomes a queen.",
+      "color": "#ffe08a",
+      "spread": 0.45,
+      "dir": [
+        1.2,
+        0.7,
+        -0.5
+      ]
+    },
+    "Black pawns": {
+      "merge": [
+        "Pawn_Body_B1",
+        "Pawn_Body_B2",
+        "Pawn_Body_B3",
+        "Pawn_Body_B4",
+        "Pawn_Body_B5",
+        "Pawn_Body_B6",
+        "Pawn_Body_B7",
+        "Pawn_Body_B8"
+      ],
+      "info": "Black's eight pawns. On its first move a pawn may advance two squares instead of one.",
+      "color": "#d77bff",
+      "spread": 0.45,
+      "dir": [
+        1.2,
+        0.7,
+        0.5
+      ]
+    },
+    "White rooks": {
+      "merge": [
+        "Castle_W1",
+        "Castle_W2"
+      ],
+      "info": "Rooks move any distance along a row or column, and join the king in castling.",
+      "color": "#ffc46b",
+      "dir": [
+        -1.2,
+        0.7,
+        -0.5
+      ]
+    },
+    "Black rooks": {
+      "merge": [
+        "Castle_B1",
+        "Castle_B2"
+      ],
+      "info": "Black's rooks, shaped like castle towers. Two rooks working together are worth more than a queen.",
+      "color": "#ff8f6b",
+      "dir": [
+        -1.2,
+        0.7,
+        0.5
+      ]
+    },
+    "White knights": {
+      "merge": [
+        "Knight_W1",
+        "Knight_W2"
+      ],
+      "info": "Knights move in an L shape, two squares then one to the side, and are the only pieces that jump.",
+      "color": "#9df2c0",
+      "dir": [
+        -0.6,
+        0.95,
+        -0.5
+      ]
+    },
+    "Black knights": {
+      "merge": [
+        "Knight_B1",
+        "Knight_B2"
+      ],
+      "info": "Black's knights. A knight always lands on a square of the opposite colour to where it started.",
+      "color": "#5fd3ff",
+      "dir": [
+        -0.6,
+        0.95,
+        0.5
+      ]
+    },
+    "White bishops": {
+      "merge": [
+        "Bishop_W1",
+        "Bishop_W2"
+      ],
+      "info": "Bishops move any distance diagonally, so each one stays on squares of a single colour all game.",
+      "color": "#c9f27a",
+      "dir": [
+        0.6,
+        0.95,
+        -0.5
+      ]
+    },
+    "Black bishops": {
+      "merge": [
+        "Bishop_B1",
+        "Bishop_B2"
+      ],
+      "info": "Black's bishops: one on light squares, one on dark. Together they cover the whole board.",
+      "color": "#7a9bff",
+      "dir": [
+        0.6,
+        0.95,
+        0.5
+      ]
+    }
+  },
+  "scale": 0.9
+}

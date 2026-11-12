@@ -24,8 +24,18 @@ export const MODELS = [saturn, heart, dna, tower, atom, galaxy, engine];
  *   { type: 'mesh', name, url, details }     a bundled 3D file; details is the URL of its .json (optional)
  *   { type: 'mesh', name, buffer, dropped }  a file someone dropped on the page
  */
+const example = (file, name) => ({
+  type: 'mesh',
+  name,
+  url: new URL(`../../examples/${file}.glb`, import.meta.url).href,
+  details: new URL(`../../examples/${file}.json`, import.meta.url).href,
+});
+
 export const ENTRIES = [
   ...MODELS.map((def) => ({ type: 'procedural', def })),
+  example('chess-set', 'Chess set'),
+  example('flight-helmet', 'Flight helmet'),
+  example('refrigerator', 'Display fridge'),
 ];
 
 /** Add a model; a dropped file with the same name as an earlier one replaces it. Returns its index. */

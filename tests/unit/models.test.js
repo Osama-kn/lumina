@@ -121,3 +121,36 @@ test('the starter template follows every model rule', async () => {
   assert.ok(maxR > 0.5 && maxR < 1.8, `max radius ${maxR}`);
   for (const p of a.parts) assert.ok(p.info.length > 20);
 });
+
+test('every bundled 3D file follows every model rule and builds fast', async () => {
+  const { readFile } = await import('node:fs/promises');
+  const { ENTRIES } = await import('../../src/models/registry.js');
+  const { parseGltf } = await import('../../src/models/gltf.js');
+  const { meshToModel } = await import('../../src/models/mesh-model.js');
+  const root = new URL('../../', import.meta.url);
+  const files = ENTRIES.filter((e) => e.type === 'mesh' && !e.dropped);
+  assert.ok(files.length >= 3, `${files.length} bundled 3D files`);
+  for (const e of files) {
+    const buf = await readFile(new URL(e.url, root));
+    const details = JSON.parse(await readFile(new URL(e.details, root), 'utf8'));
+    const meshes = parseGltf(buf.buffer.slice(buf.byteOffset, buf.byteOffset + buf.byteLength)).meshes;
+    const m = meshToModel(meshes, details, N);
+    assert.equal(m.name, e.name, 'registry name matches the details file');
+    assert.equal(m.target.length, N * 4);
+    assert.ok(m.parts.length >= 3 && m.parts.length <= MAX_PARTS, `${e.name}: ${m.parts.length} parts`);
+    const used = new Set();
+    let maxR = 0;
+    for (let k = 0; k < N; k++) {
+      used.add(m.target[k * 4 + 3]);
+      maxR = Math.max(maxR, Math.hypot(m.target[k * 4], m.target[k * 4 + 1], m.target[k * 4 + 2]));
+    }
+    assert.equal(used.size, m.parts.length, `${e.name}: every part used`);
+    assert.ok(maxR > 0.5 && maxR < 1.8, `${e.name}: radius ${maxR}`);
+    // Every part is one the details file explains: no leftovers with default text.
+    for (const p of m.parts) assert.ok(details.parts[p.name], `${e.name}: "${p.name}" has no explanation`);
+    assert.ok(m.credit, `${e.name}: credit`);
+    const t0 = performance.now();
+    meshToModel(meshes, details, 200_000);
+    assert.ok(performance.now() - t0 < 1500, `${e.name} too slow`);
+  }
+});

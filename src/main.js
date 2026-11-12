@@ -531,7 +531,7 @@ function frame(now, fixedDt) {
   view.alpha = ease(view.alpha, controller.mode === MODE.DORMANT ? 0.18 : 1, 2.5, dt);
   view.cloudMix = ease(view.cloudMix, formed ? 0 : 1, 2.5, dt);
 
-  beatNow = model.beat ? heartbeat(time) : 1;
+  beatNow = model?.beat ? heartbeat(time) : 1;
   camera = {
     rot,
     distance: renderer.distance,
@@ -539,8 +539,9 @@ function frame(now, fixedDt) {
     width: window.innerWidth,
     height: window.innerHeight,
   };
-  updateSelection(formed);
-  updateCallouts(formed, dt);
+  // Until the first model has loaded there are no parts to select or label.
+  updateSelection(formed && !!model);
+  updateCallouts(formed && !!model, dt);
 
   renderer.step({
     mode: MODE_ID[controller.mode],

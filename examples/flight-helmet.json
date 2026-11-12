@@ -1,0 +1,81 @@
+{
+  "name": "Flight helmet",
+  "blurb": "A vintage pilot's flight helmet with goggles and an oxygen hose, on a wooden display stand.",
+  "scale": 0.8,
+  "credit": "\"Flight Helmet\" by Gary Hsu, CC0",
+  "parts": {
+    "Leather cap": {
+      "merge": [
+        "LeatherParts_low"
+      ],
+      "info": "A fitted leather cap kept the pilot warm in an open or unheated cockpit and held the earphones in place.",
+      "color": "#ffb86b",
+      "dir": [
+        0,
+        0.9,
+        -0.5
+      ]
+    },
+    "Goggle frames": {
+      "merge": [
+        "GlassPlastic_low"
+      ],
+      "info": "The goggle frames and straps sealed out wind, oil and cold air at high speed.",
+      "color": "#7fd4ff",
+      "dir": [
+        0.7,
+        0.5,
+        0.7
+      ]
+    },
+    "Lenses": {
+      "merge": [
+        "Lenses_low"
+      ],
+      "info": "Tinted lenses cut the glare of the sun at altitude, where the light is much harsher.",
+      "color": "#c69bff",
+      "dir": [
+        0,
+        0.5,
+        1.2
+      ]
+    },
+    "Metal fittings": {
+      "merge": [
+        "MetalParts_low"
+      ],
+      "info": "Buckles, rivets and the hose connector: small metal parts that hold everything together.",
+      "color": "#fff1a8",
+      "dir": [
+        -0.9,
+        0.2,
+        0.3
+      ]
+    },
+    "Oxygen hose": {
+      "merge": [
+        "Hose_low"
+      ],
+      "info": "Above about 3,000 metres the air is too thin, so this ribbed hose fed oxygen to the pilot's mask.",
+      "color": "#7dffb0",
+      "dir": [
+        0.9,
+        -0.2,
+        0.3
+      ]
+    },
+    "Stand": {
+      "merge": [
+        "RubberWood_low"
+      ],
+      "info": "The wooden stand and rubber head form the helmet is displayed on; they are not part of the helmet.",
+      "color": "#ff7f8f",
+      "dir": [
+        0,
+        -0.9,
+        0
+      ],
+      "spread": 0.1
+    }
+  }
+}

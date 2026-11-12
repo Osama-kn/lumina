@@ -1,0 +1,78 @@
+{
+  "name": "Display fridge",
+  "blurb": "A glass-door drinks fridge, the kind found in shops and bars.",
+  "scale": 0.8,
+  "credit": "\"Commercial Refrigerator\" by Eric Chadwick (Darmstadt Graphics Group), based on \"Commercial Fridge\" by Sean Thomas, CC BY 4.0",
+  "parts": {
+    "Cabinet": {
+      "merge": [
+        "FridgeCase"
+      ],
+      "info": "The insulated outer box. Foam between its metal skins keeps the heat out so the cooling system works less.",
+      "color": "#7fb2ff",
+      "spread": 0.15
+    },
+    "Door frame": {
+      "merge": [
+        "FridgeDoor"
+      ],
+      "info": "The door frame swings on hinges and has magnets in its seal that pull it shut.",
+      "color": "#ffc46b",
+      "dir": [
+        0,
+        0,
+        1.1
+      ]
+    },
+    "Door seal and panel": {
+      "merge": [
+        "FridgeDoorInner"
+      ],
+      "info": "A rubber gasket around the inside of the door stops cold air leaking out when it is closed.",
+      "color": "#ff7aa8",
+      "dir": [
+        0,
+        0.3,
+        0.9
+      ]
+    },
+    "Glass": {
+      "merge": [
+        "FridgeGlass"
+      ],
+      "info": "Double glazing: two panes with a sealed gap between them insulate while letting you see the drinks.",
+      "color": "#8ff0ff",
+      "dir": [
+        0,
+        0,
+        1.4
+      ],
+      "spread": 0.1
+    },
+    "Shelves and lining": {
+      "merge": [
+        "FridgeInterior"
+      ],
+      "info": "Wire shelves let cold air circulate around every bottle instead of trapping warm pockets.",
+      "color": "#c9f27a",
+      "dir": [
+        0,
+        0.6,
+        -0.3
+      ]
+    },
+    "Champagne bottles": {
+      "merge": [
+        "ChampagneBottles"
+      ],
+      "info": "Rows of bottles. A full fridge actually holds its temperature better, because cold drinks store the cold.",
+      "color": "#ffe08a",
+      "dir": [
+        0,
+        0.9,
+        0.5
+      ],
+      "spread": 0.3
+    }
+  }
+}
