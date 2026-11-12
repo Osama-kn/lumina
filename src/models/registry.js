@@ -84,7 +84,15 @@ export async function loadModel(index, n, seed = 1337) {
     e.buffer ? e.buffer.slice(0) : fetchBuffer(e.url),
     typeof e.details === 'string' ? fetchJson(e.details) : e.details ?? null,
   ]);
-  const job = { buffer, details, n, seed: seed + i * 7919, name: e.name };
+  return loadFile(buffer, e.name, n, seed + i * 7919, details);
+}
+
+/**
+ * Turn the bytes of a 3D file into a model without adding it to the list.
+ * The buffer is handed over to the worker, so pass a copy if you need it afterwards.
+ */
+export function loadFile(buffer, name, n, seed = 1337, details = null) {
+  const job = { buffer, details, n, seed, name };
   return typeof Worker === 'undefined' ? buildMeshHere(job) : buildMeshInWorker(job);
 }
 

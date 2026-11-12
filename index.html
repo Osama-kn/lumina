@@ -47,10 +47,19 @@
     <button type="button" data-action="next" title="Next model (V or →)">Next</button>
     <button type="button" data-action="labels" title="Part labels (L)" aria-pressed="true">Labels</button>
     <button type="button" data-action="demo" title="Play demo (D)">Demo</button>
+    <button type="button" data-action="open-file" title="Turn your own .glb file into particles">Open 3D file</button>
     <button type="button" data-action="help" title="Help (H)" aria-label="Help">?</button>
   </nav>
 
   <div class="toast" id="toast" role="alert" hidden></div>
+
+  <input type="file" id="file-input" accept=".glb,.gltf,model/gltf-binary,model/gltf+json" hidden>
+  <div class="drop" id="drop" hidden>
+    <div class="drop-body">
+      <p class="drop-title">Drop a .glb to turn it into particles</p>
+      <p class="drop-fine">Your file stays on this device. Nothing is uploaded.</p>
+    </div>
+  </div>
 
   <div class="sheet start" id="start">
     <div class="start-body">

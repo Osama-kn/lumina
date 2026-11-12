@@ -298,3 +298,26 @@ kbd {
 @media (prefers-reduced-motion: reduce) {
   .model h1, .parts, button { transition: none; }
 }
+
+/* ── drop a file ─────────────────────────────────────── */
+.drop {
+  position: fixed;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding: var(--gutter);
+  background: rgba(4, 4, 10, 0.72);
+  backdrop-filter: blur(6px);
+  pointer-events: none;
+  z-index: 5;
+}
+.drop[hidden] { display: none; }
+.drop-body {
+  width: min(560px, 100%);
+  padding: 48px 32px;
+  border: 1.5px dashed var(--gold);
+  border-radius: 20px;
+  text-align: center;
+}
+.drop-title { margin: 0 0 8px; font: 500 clamp(22px, 3vw, 30px)/1.2 var(--display); }
+.drop-fine { margin: 0; color: var(--muted); }

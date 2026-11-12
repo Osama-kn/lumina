@@ -2,7 +2,8 @@
 // mouse, HUD, camera preview and the built-in demo.
 
 import { ParticleRenderer } from './gl/renderer.js';
-import { entryCount, entryName, isProcedural, buildModel, loadModel as loadEntry, partUniforms } from './models/registry.js';
+import { entryCount, entryName, isProcedural, buildModel, loadModel as loadEntry, loadFile, addEntry, partUniforms } from './models/registry.js';
+import { cleanName } from './models/mesh-model.js';
 import { Controller, MODE } from './logic/controller.js';
 import { HandInput } from './logic/input.js';
 import { MODE_ID, heartbeat } from './logic/physics.js';
@@ -27,6 +28,7 @@ const ui = {
   cam: $('cam'), video: $('video'), overlay: $('cam-overlay'), camPose: $('cam-pose'),
   controls: $('controls'), toast: $('toast'), start: $('start'), help: $('help'),
   labels: $('labels'), leaders: $('leaders'), finger: $('finger'), model: $('model-info'),
+  drop: $('drop'), fileInput: $('file-input'),
 };
 
 function hideStart() {
@@ -323,7 +325,70 @@ const actions = {
   demo: () => (demo ? (demo = null, setPressed('demo', false)) : playDemo()),
   labels: () => { labelsOn = !labelsOn; setPressed('labels', labelsOn); },
   help: () => toggleHelp(),
+  'open-file': () => ui.fileInput.click(),
 };
+
+// ───────────── your own 3D files ─────────────
+// A dropped or opened .glb is read in a worker, added to the model list and
+// shown built. Nothing leaves the browser.
+const MAX_FILE_BYTES = 50 * 1024 * 1024;
+let importing = Promise.resolve();
+
+function importFile(file) {
+  if (!file) return importing;
+  importing = importing.then(() => importOne(file));
+  return importing;
+}
+
+async function importOne(file) {
+  if (file.size > MAX_FILE_BYTES) {
+    toast(`${file.name} is too big: the limit is 50 MB. Try scripts/slim-glb.mjs to shrink it.`);
+    return;
+  }
+  const name = cleanName(file.name.replace(/\.(glb|gltf)$/i, ''));
+  ui.status.textContent = `Loading ${name}…`;
+  try {
+    const buffer = await file.arrayBuffer();
+    const m = await loadFile(buffer.slice(0), name, COUNT);
+    const index = addEntry({ type: 'mesh', name, buffer, dropped: true });
+    modelCache.set(index, m);
+    controller.setModelCount(entryCount());
+    controller.goTo(index);
+    if (controller.mode === MODE.DORMANT) controller.snap();
+    if (controller.mode === MODE.CLOUD) controller.pose('fist');
+  } catch (err) {
+    toast(modelError(err, file.name));
+  } finally {
+    syncHud();
+  }
+}
+
+ui.fileInput.addEventListener('change', () => {
+  importFile(ui.fileInput.files[0]);
+  ui.fileInput.value = ''; // so choosing the same file again still fires
+});
+
+let dragDepth = 0;
+const hasFiles = (e) => [...(e.dataTransfer?.types ?? [])].includes('Files');
+window.addEventListener('dragenter', (e) => {
+  if (!hasFiles(e)) return;
+  e.preventDefault();
+  dragDepth++;
+  ui.drop.hidden = false;
+});
+window.addEventListener('dragover', (e) => {
+  if (hasFiles(e)) e.preventDefault();
+});
+window.addEventListener('dragleave', () => {
+  dragDepth = Math.max(0, dragDepth - 1);
+  if (!dragDepth) ui.drop.hidden = true;
+});
+window.addEventListener('drop', (e) => {
+  e.preventDefault();
+  dragDepth = 0;
+  ui.drop.hidden = true;
+  importFile(e.dataTransfer?.files?.[0]);
+});
 
 function toggleHelp(force) {
   const show = force ?? ui.help.hidden;
@@ -604,4 +669,6 @@ window.__lumina = {
   ready: () => loading,
   entryName,
   showModel,
+  /** Resolves once the files dropped or opened so far have been handled. */
+  imported: () => importing,
 };
