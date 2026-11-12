@@ -10,7 +10,8 @@
     "postinstall": "node scripts/fetch-model.mjs",
     "test": "npm run test:unit && npm run test:e2e",
     "test:unit": "node --test \"tests/unit/*.test.js\"",
-    "test:e2e": "playwright test"
+    "test:e2e": "playwright test",
+    "capture": "node scripts/capture.mjs"
   },
   "keywords": [
     "webgl2",
@@ -29,6 +30,7 @@
     "@mediapipe/tasks-vision": "^1.2.2"
   },
   "devDependencies": {
-    "@playwright/test": "^1.63.0"
+    "@playwright/test": "^1.63.0",
+    "gifenc": "^1.0.3"
   }
 }
