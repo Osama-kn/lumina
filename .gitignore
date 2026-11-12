@@ -1,0 +1,8 @@
+node_modules/
+test-results/
+playwright-report/
+models/*.task
+models/*.part
+.DS_Store
+docs/superpowers/
+.superpowers/
