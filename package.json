@@ -6,12 +6,20 @@
   "private": true,
   "scripts": {
     "start": "node server.mjs",
+    "build": "node scripts/build-site.mjs",
     "postinstall": "node scripts/fetch-model.mjs",
     "test": "npm run test:unit && npm run test:e2e",
     "test:unit": "node --test \"tests/unit/*.test.js\"",
     "test:e2e": "playwright test"
   },
-  "keywords": ["webgl2", "particles", "mediapipe", "hand-tracking", "gestures", "transform-feedback"],
+  "keywords": [
+    "webgl2",
+    "particles",
+    "mediapipe",
+    "hand-tracking",
+    "gestures",
+    "transform-feedback"
+  ],
   "author": "Oussama (Osama-kn)",
   "license": "MIT",
   "engines": {

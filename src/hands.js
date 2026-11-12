@@ -1,20 +1,32 @@
 // Webcam + MediaPipe Hand Landmarker. Everything runs on-device: frames never
-// leave the browser. The tracking runtime is served from node_modules by our
-// own server; the model file comes from models/ if `npm install` fetched it,
-// otherwise from Google's CDN.
+// leave the browser. The tracking runtime comes from vendor/ on the built site
+// (scripts/build-site.mjs) or from node_modules when run with `npm start`; the
+// model file comes from models/ if present, otherwise from Google's CDN.
+// Paths are relative to this file, so the app also works from a sub-path.
 
-const BUNDLE = '/node_modules/@mediapipe/tasks-vision/vision_bundle.mjs';
-const WASM = '/node_modules/@mediapipe/tasks-vision/wasm';
-const LOCAL_MODEL = '/models/hand_landmarker.task';
+const here = (path) => new URL(path, import.meta.url).href;
+const VENDOR = here('../vendor/tasks-vision');
+const NODE_MODULES = here('../node_modules/@mediapipe/tasks-vision');
+const LOCAL_MODEL = here('../models/hand_landmarker.task');
 const CDN_MODEL =
   'https://storage.googleapis.com/mediapipe-models/hand_landmarker/hand_landmarker/float16/1/hand_landmarker.task';
 
-async function modelPath() {
+async function exists(url) {
   try {
-    const res = await fetch(LOCAL_MODEL, { method: 'HEAD' });
-    if (res.ok) return LOCAL_MODEL;
-  } catch { /* fall through */ }
-  return CDN_MODEL;
+    return (await fetch(url, { method: 'HEAD' })).ok;
+  } catch {
+    return false;
+  }
+}
+
+/** Where to load the tracking runtime and model from. */
+export async function resolveRuntime() {
+  const root = (await exists(`${VENDOR}/vision_bundle.mjs`)) ? VENDOR : NODE_MODULES;
+  return {
+    bundle: `${root}/vision_bundle.mjs`,
+    wasm: `${root}/wasm`,
+    model: (await exists(LOCAL_MODEL)) ? LOCAL_MODEL : CDN_MODEL,
+  };
 }
 
 /**
@@ -39,9 +51,10 @@ export async function startHandTracking(video, onStatus = () => {}) {
   await video.play();
 
   onStatus('Loading hand tracking…');
-  const { FilesetResolver, HandLandmarker } = await import(BUNDLE);
-  const fileset = await FilesetResolver.forVisionTasks(WASM);
-  const modelAssetPath = await modelPath();
+  const runtime = await resolveRuntime();
+  const { FilesetResolver, HandLandmarker } = await import(runtime.bundle);
+  const fileset = await FilesetResolver.forVisionTasks(runtime.wasm);
+  const modelAssetPath = runtime.model;
 
   let landmarker;
   try {
