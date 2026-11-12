@@ -28,7 +28,7 @@ const ui = {
   cam: $('cam'), video: $('video'), overlay: $('cam-overlay'), camPose: $('cam-pose'),
   controls: $('controls'), toast: $('toast'), start: $('start'), help: $('help'),
   labels: $('labels'), leaders: $('leaders'), finger: $('finger'), model: $('model-info'),
-  drop: $('drop'), fileInput: $('file-input'), credit: $('model-credit'), guide: $('guide'), picker: $('model-list'), hint: $('hint'), hintText: $('hint-text'),
+  drop: $('drop'), fileInput: $('file-input'), credit: $('model-credit'), guide: $('guide'), number: $('model-number'), picker: $('model-list'), hint: $('hint'), hintText: $('hint-text'),
 };
 
 let booted = false;
@@ -83,6 +83,7 @@ function showModel(index) {
     if (!modelCache.has(index)) modelCache.set(index, buildModel(index, COUNT));
     applyModel(modelCache.get(index));
     shownIndex = index;
+    showNumber(index);
     loadingName = '';
     loading = Promise.resolve();
     return loading;
@@ -91,7 +92,7 @@ function showModel(index) {
   loading = loadEntry(index, COUNT)
     .then((m) => {
       modelCache.set(index, m);
-      if (token === loadToken) { applyModel(m); shownIndex = index; }
+      if (token === loadToken) { applyModel(m); shownIndex = index; showNumber(index); }
     })
     .catch((err) => {
       if (token !== loadToken) return;
@@ -105,6 +106,13 @@ function showModel(index) {
       syncHud();
     });
   return loading;
+}
+
+const pad2 = (n) => String(n).padStart(2, '0');
+
+/** "No. 03 of 10": the model's place in the catalogue. */
+function showNumber(index) {
+  ui.number.textContent = `No. ${pad2(index + 1)} of ${entryCount()}`;
 }
 
 /** A sentence a person can act on, for each way a 3D file can fail. */
@@ -392,16 +400,17 @@ function togglePicker(force) {
 
 function buildPicker() {
   const item = (i) => {
-    const e = ENTRIES[i];
     const b = document.createElement('button');
     b.type = 'button';
     b.dataset.index = i;
     if (i === controller.modelIndex) b.setAttribute('aria-current', 'true');
-    const dot = document.createElement('i');
-    dot.style.color = e.type === 'procedural' ? cssColor(e.def.parts[0].color) : 'var(--gold)';
+    const num = document.createElement('span');
+    num.className = 'picker-num';
+    num.textContent = pad2(i + 1);
     const name = document.createElement('span');
+    name.className = 'picker-name';
     name.textContent = entryName(i);
-    b.append(dot, name);
+    b.append(num, name);
     b.addEventListener('click', () => { togglePicker(false); controller.goTo(i); });
     return b;
   };

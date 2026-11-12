@@ -68,3 +68,23 @@ test('names are set in the serif', async ({ page }) => {
   const family = await page.evaluate(() => getComputedStyle(document.getElementById('model-name')).fontFamily);
   expect(family).toContain('Newsreader');
 });
+
+test('the title reads like a catalogue entry', async ({ page }) => {
+  await boot(page);
+  await expect(page.locator('#model-number')).toHaveText(/^No\. 01 of \d+$/);
+  await page.evaluate(() => window.__lumina.controller.goTo(2));
+  await expect(page.locator('#model-number')).toHaveText(/^No\. 03 of \d+$/);
+});
+
+test('the model list is a numbered index', async ({ page }) => {
+  await boot(page);
+  await page.locator('[data-action="models"]').click();
+  await expect(page.locator('#model-list [data-index="0"]')).toHaveText(/^01\s*Saturn$/);
+  await expect(page.locator('#model-list [data-index="9"]')).toHaveText(/^10\s*/);
+});
+
+test('the hint hides with a word, not a symbol', async ({ page }) => {
+  await page.addInitScript(() => { try { localStorage.removeItem('lumina.hints.done'); } catch {} });
+  await boot(page);
+  await expect(page.locator('#hint button')).toHaveText('Hide');
+});
