@@ -2,7 +2,7 @@
 // mouse, HUD, camera preview and the built-in demo.
 
 import { ParticleRenderer } from './gl/renderer.js';
-import { MODELS, buildModel, partUniforms } from './models/models.js';
+import { MODELS, buildModel, partUniforms } from './models/registry.js';
 import { Controller, MODE } from './logic/controller.js';
 import { HandInput } from './logic/input.js';
 import { MODE_ID, heartbeat } from './logic/physics.js';

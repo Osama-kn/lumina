@@ -5,7 +5,8 @@
 // per-particle data after setup, which is what makes 200k+ particles cheap.
 
 import { PHYSICS_VS, PHYSICS_FS, RENDER_VS, RENDER_FS, FADE_VS, FADE_FS } from './shaders.js';
-import { mulberry32, MAX_PARTS } from '../models/models.js';
+import { mulberry32 } from '../models/geometry.js';
+import { MAX_PARTS } from '../models/core.js';
 import { perspective, translation } from '../lib/mat.js';
 
 function compile(gl, type, src) {

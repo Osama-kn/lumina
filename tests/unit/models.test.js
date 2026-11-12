@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { MODELS, MAX_PARTS, buildModel, allocate, partUniforms } from '../../src/models/models.js';
+import { MODELS, MAX_PARTS, buildModel, allocate, partUniforms } from '../../src/models/registry.js';
 import { stepParticle, heartbeat } from '../../src/logic/physics.js';
 
 const N = 6000;

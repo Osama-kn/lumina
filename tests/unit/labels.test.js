@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { MODELS, buildModel, partUniforms } from '../../src/models/models.js';
+import { MODELS, buildModel, partUniforms } from '../../src/models/registry.js';
 import { yawPitch } from '../../src/lib/mat.js';
 import { project, explodedPoint, pickPart, anchorOnScreen, stackColumn, chooseSide } from '../../src/logic/labels.js';
 
